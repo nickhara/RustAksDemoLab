@@ -1,0 +1,68 @@
+# Rust
+src/rust-api/target/
+src/rust-api/**/*.rs.bk
+src/rust-api/Cargo.lock
+
+# .NET
+src/csharp-api/bin/
+src/csharp-api/obj/
+src/csharp-api/*.user
+src/csharp-api/.vs/
+src/csharp-api/*.csproj.user
+src/csharp-api/Properties/launchSettings.json
+
+# IDE
+.idea/
+.vscode/
+src/.vs/
+*.swp
+*.swo
+*.suo
+*.ntvs*
+*.njsproj
+*.sln.docstates
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# Docker
+*.log
+docker-compose.override.yml
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.env
+
+# Build outputs
+dist/
+build/
+out/
+publish/
+
+# Debug
+*.pdb
+*.ilk
+
+# Temporary files
+*.tmp
+*.temp
+*.cache
+*~
+
+# Package locks (optional - uncomment if not tracking)
+# package-lock.json
+# yarn.lock
+
+# Azure
+.azure/
+
+# Kubernetes secrets (never commit)
+**/secrets.yaml
+**/secrets.yml
+**/*-secrets.yaml
+**/*-secrets.yml
