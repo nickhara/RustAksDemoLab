@@ -204,7 +204,7 @@ kubectl version --client
 
 ### Rust API
 
-```bash
+```powershell
 cd src/rust-api
 cargo run
 # API runs on http://localhost:8080
@@ -212,7 +212,7 @@ cargo run
 
 ### C# API
 
-```bash
+```powershell
 cd src/csharp-api
 dotnet run
 # API runs on http://localhost:8080
@@ -220,7 +220,7 @@ dotnet run
 
 ## Building Docker Images
 
-```bash
+```powershell
 # Build Rust API
 docker build -t hello-rust-api:latest ./src/rust-api
 
@@ -230,11 +230,11 @@ docker build -t hello-csharp-api:latest ./src/csharp-api
 
 ## Testing Locally with Docker
 
-```bash
+```powershell
 # Run Rust API
 docker run -p 8080:8080 hello-rust-api:latest
 
-# Run C# API
+# Run C# API (use different host port to avoid conflict)
 docker run -p 8081:8080 hello-csharp-api:latest
 ```
 
@@ -268,13 +268,13 @@ curl http://localhost:8080/health
 curl http://localhost:8080/info
 ```
 
-> **Tip:** Add `-v` for verbose output or pipe to `jq` for formatted JSON: `curl http://localhost:8080/ | jq`
+> **Tip:** Use `| ConvertTo-Json` for formatted output: `Invoke-RestMethod -Uri http://localhost:8080/ | ConvertTo-Json`
 
 ## Deploying to Azure Kubernetes Service
 
 ### 1. Create AKS Cluster and ACR
 
-```bash
+```powershell
 # Login to Azure
 az login
 
@@ -282,15 +282,15 @@ az login
 az group create --name rg-hello-apis --location eastus
 
 # Deploy infrastructure using Bicep
-az deployment group create \
-  --resource-group rg-hello-apis \
-  --template-file src/infra/main.bicep \
+az deployment group create `
+  --resource-group rg-hello-apis `
+  --template-file src/infra/main.bicep `
   --parameters clusterName=aks-hello-apis acrName=acrhelloapisXXXX
 ```
 
 ### 2. Push Images to ACR
 
-```bash
+```powershell
 # Login to ACR
 az acr login --name acrhelloapisXXXX
 
@@ -304,7 +304,7 @@ docker push acrhelloapisXXXX.azurecr.io/hello-csharp-api:latest
 
 ### 3. Deploy to AKS
 
-```bash
+```powershell
 # Get AKS credentials
 az aks get-credentials --resource-group rg-hello-apis --name aks-hello-apis
 
