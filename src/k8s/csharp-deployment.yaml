@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: csharp-hello-api
+  namespace: hello-apis
+  labels:
+    app: csharp-hello-api
+    app.kubernetes.io/name: csharp-hello-api
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: hello-apis
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: csharp-hello-api
+  template:
+    metadata:
+      labels:
+        app: csharp-hello-api
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: csharp-hello-api
+          # Update this image path to your ACR
+          image: <your-acr-name>.azurecr.io/hello-csharp-api:latest
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "8080"
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: csharp-hello-api
+  namespace: hello-apis
+  labels:
+    app: csharp-hello-api
+spec:
+  type: LoadBalancer
+  selector:
+    app: csharp-hello-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP

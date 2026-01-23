@@ -274,6 +274,8 @@ curl http://localhost:8080/info
 
 ### 1. Create AKS Cluster and ACR
 
+> **Note:** ACR names must be globally unique and contain only lowercase letters and numbers (5-50 characters).
+
 ```powershell
 # Login to Azure
 az login
@@ -281,25 +283,25 @@ az login
 # Create resource group
 az group create --name rg-hello-apis --location eastus
 
-# Deploy infrastructure using Bicep
+# Deploy infrastructure using Bicep (replace acrhelloapis12345 with a unique name)
 az deployment group create `
   --resource-group rg-hello-apis `
   --template-file src/infra/main.bicep `
-  --parameters clusterName=aks-hello-apis acrName=acrhelloapisXXXX
+  --parameters clusterName=aks-hello-apis acrName=acrhelloapis12345
 ```
 
 ### 2. Push Images to ACR
 
 ```powershell
 # Login to ACR
-az acr login --name acrhelloapisXXXX
+az acr login --name acrhelloapis12345
 
 # Tag and push images
-docker tag hello-rust-api:latest acrhelloapisXXXX.azurecr.io/hello-rust-api:latest
-docker tag hello-csharp-api:latest acrhelloapisXXXX.azurecr.io/hello-csharp-api:latest
+docker tag hello-rust-api:latest acrhelloapis12345.azurecr.io/hello-rust-api:latest
+docker tag hello-csharp-api:latest acrhelloapis12345.azurecr.io/hello-csharp-api:latest
 
-docker push acrhelloapisXXXX.azurecr.io/hello-rust-api:latest
-docker push acrhelloapisXXXX.azurecr.io/hello-csharp-api:latest
+docker push acrhelloapis12345.azurecr.io/hello-rust-api:latest
+docker push acrhelloapis12345.azurecr.io/hello-csharp-api:latest
 ```
 
 ### 3. Deploy to AKS

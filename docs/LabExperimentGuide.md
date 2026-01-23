@@ -1,4 +1,4 @@
-# Deployment Guide: Azure Kubernetes Service
+# Lab Experiment Guide: Rust and Azure Kubernetes Service
 
 This guide walks you through deploying the Hello World REST APIs to Azure Kubernetes Service (AKS) using Bicep for infrastructure and kubectl for application deployment.
 
@@ -16,20 +16,174 @@ This guide walks you through deploying the Hello World REST APIs to Azure Kubern
 
 ## Prerequisites
 
-Before starting, ensure you have the following installed:
+The following tools are required for development and deployment:
 
-- [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli) (v2.50+)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [kubectl](https://kubernetes.io/docs/tasks/tools/)
-- An active Azure subscription
+| Tool | Purpose | Required For |
+| ---- | ------- | ------------ |
+| WSL 2 | Linux environment on Windows | Docker Desktop (Windows) |
+| Docker Desktop | Container runtime | Building & running containers |
+| Visual Studio Build Tools | C++ compiler and linker | Rust development (Windows) |
+| Rust | Rust API development | Local development |
+| .NET 10 SDK | C# API development | Local development |
+| Azure CLI | Azure resource management | Azure deployment |
+| kubectl | Kubernetes management | AKS deployment |
 
-Verify your tools:
+### Installing WSL 2 (Windows Only)
 
-```powershell
+WSL 2 is required for Docker Desktop on Windows.
+
+1. Open PowerShell as Administrator and run:
+
+   ```powershell
+   wsl --install
+   ```
+
+2. Restart your computer
+3. After restart, set WSL 2 as the default version:
+
+   ```powershell
+   wsl --set-default-version 2
+   ```
+
+4. Verify installation:
+
+   ```powershell
+   wsl --version
+   ```
+
+> **Note:** Windows 10 version 2004+ (Build 19041+) or Windows 11 is required for WSL 2.
+
+### Installing Docker Desktop
+
+1. Download from [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+2. Run the installer and follow the prompts
+3. Restart your computer if prompted
+4. Verify installation:
+
+   ```bash
+   docker --version
+   docker run hello-world
+   ```
+
+### Installing Visual Studio Build Tools (Windows Only)
+
+Visual Studio Build Tools provides the MSVC compiler and linker required for Rust development on Windows.
+
+1. Download [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
+2. Run the installer
+3. Select **"Desktop development with C++"** workload
+4. Click Install and wait for completion
+5. Restart your computer
+
+> **Note:** This is different from VS Code. The Build Tools provide the C++ compiler toolchain needed by Rust.
+
+### Installing Rust
+
+**Windows:**
+
+1. Download and run [rustup-init.exe](https://rustup.rs/)
+2. Follow the on-screen instructions (default installation is recommended)
+3. Restart your terminal
+4. Verify installation:
+
+   ```bash
+   rustc --version
+   cargo --version
+   ```
+
+**macOS/Linux:**
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+source $HOME/.cargo/env
+rustc --version
+```
+
+### Installing .NET 10 SDK
+
+**Windows:**
+
+1. Download from [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
+2. Run the installer
+3. Verify installation:
+
+   ```bash
+   dotnet --version
+   ```
+
+**macOS (using Homebrew):**
+
+```bash
+brew install dotnet@10
+dotnet --version
+```
+
+**Linux (Ubuntu/Debian):**
+
+```bash
+sudo apt-get update
+sudo apt-get install -y dotnet-sdk-10.0
+dotnet --version
+```
+
+### Installing Azure CLI
+
+**Windows:**
+
+1. Download and run the [Azure CLI MSI installer](https://aka.ms/installazurecliwindows)
+2. Verify installation:
+
+   ```bash
+   az --version
+   ```
+
+**macOS:**
+
+```bash
+brew install azure-cli
 az --version
-docker --version
+```
+
+**Linux:**
+
+```bash
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+az --version
+```
+
+### Installing kubectl
+
+**Windows (using winget):**
+
+```bash
+winget install Kubernetes.kubectl
 kubectl version --client
 ```
+
+**Windows (using Chocolatey):**
+
+```bash
+choco install kubernetes-cli
+kubectl version --client
+```
+
+**macOS:**
+
+```bash
+brew install kubectl
+kubectl version --client
+```
+
+**Linux:**
+
+```bash
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+kubectl version --client
+```
+
+> **Tip:** If you have Docker Desktop installed, kubectl is included. Enable it in Docker Desktop > Settings > Kubernetes > Enable Kubernetes.
+
 
 ## Architecture Overview
 
@@ -43,25 +197,21 @@ The deployment creates:
 | **Load Balancer** | Exposes APIs to the internet |
 
 ```text
-┌─────────────────────────────────────────────────────────────────┐
-│                        Azure Resource Group                      │
-│  ┌──────────────────┐       ┌────────────────────────────────┐  │
-│  │                  │       │         AKS Cluster            │  │
-│  │  Azure Container │       │  ┌────────────────────────┐   │  │
-│  │  Registry (ACR)  │◄──────│  │   hello-apis namespace │   │  │
-│  │                  │ pull  │  │  ┌──────┐  ┌──────┐    │   │  │
-│  │  - rust-api      │       │  │  │ Rust │  │ C#   │    │   │  │
-│  │  - csharp-api    │       │  │  │ API  │  │ API  │    │   │  │
-│  │                  │       │  │  └──┬───┘  └──┬───┘    │   │  │
-│  └──────────────────┘       │  └─────┼─────────┼────────┘   │  │
-│                             │        │         │            │  │
-│                             │  ┌─────▼─────────▼─────┐      │  │
-│                             │  │    Load Balancer    │      │  │
-│                             │  └─────────┬───────────┘      │  │
-│                             └────────────┼──────────────────┘  │
-└──────────────────────────────────────────┼─────────────────────┘
-                                           │
-                                      Internet
+┌─────────────────────────────────────────────────────────────┐
+│                   Azure Resource Group                      │
+│  ┌────────────────┐       ┌──────────────────────────────┐  │
+│  │                │       │        AKS Cluster           │  │
+│  │  Azure         │       │  ┌───────────────────────┐   │  │
+│  │  Container     │◄──────│  │  hello-apis namespace │   │  │
+│  │  Registry      │ pull  │  │  ┌────┐    ┌────┐     │   │  │
+│  │                │       │  │  │Rust│    │ C# │     │   │  │
+│  │  - rust-api    │       │  │  │API │    │API │     │   │  │
+│  │  - csharp-api  │       │  │  └──┬─┘    └─┬──┘     │   │  │
+│  └────────────────┘       │  └─────┼────────┼────────┘   │  │
+│                           │     Load Balancer            │  │
+│                           └────────────┬─────────────────┘  │
+└────────────────────────────────────────┼────────────────────┘
+                                  Internet
 ```
 
 ## Step 1: Azure Infrastructure Deployment (Bicep)
@@ -76,7 +226,7 @@ az login
 az account set --subscription "<your-subscription-id>"
 
 # Verify current subscription
-az account show --query "{name:name, id:id}" -o table
+az account show --query "{name:name, id:id}" -o json
 ```
 
 ### 1.2 Create Resource Group
@@ -84,7 +234,7 @@ az account show --query "{name:name, id:id}" -o table
 ```powershell
 # Define variables
 $RESOURCE_GROUP = "rg-hello-apis"
-$LOCATION = "eastus"
+$LOCATION = "westus2"
 
 # Create resource group
 az group create --name $RESOURCE_GROUP --location $LOCATION
@@ -93,12 +243,13 @@ az group create --name $RESOURCE_GROUP --location $LOCATION
 ### 1.3 Deploy Infrastructure with Bicep
 
 The Bicep template (`src/infra/main.bicep`) creates:
+
 - Azure Container Registry (Basic SKU)
-- AKS Cluster (2 nodes, Standard_B2s)
+- AKS Cluster (2 nodes, Standard_DS2_v2)
 - Managed Identity with ACR pull permissions
 
 ```powershell
-# Define unique names (ACR name must be globally unique)
+# Define unique names (ACR name must be globally unique, alphanumeric only)
 $CLUSTER_NAME = "aks-hello-apis"
 $ACR_NAME = "acrhelloapis" + (Get-Date -Format "yyyyMMddHHmm")  # Appends timestamp for uniqueness
 
@@ -122,7 +273,7 @@ Write-Host "ACR Login Server: $ACR_LOGIN_SERVER"
 | Parameter | Description | Default |
 | --------- | ----------- | ------- |
 | `clusterName` | Name of the AKS cluster | Required |
-| `acrName` | Name of the ACR (must be globally unique) | Required |
+| `acrName` | Name of the ACR (globally unique, alphanumeric only, 5-50 chars) | Required |
 | `location` | Azure region | Resource group location |
 | `nodeVmSize` | VM size for AKS nodes | `Standard_B2s` |
 | `nodeCount` | Number of AKS nodes (1-10) | `2` |
@@ -137,9 +288,9 @@ az deployment group create `
   --parameters `
     clusterName=$CLUSTER_NAME `
     acrName=$ACR_NAME `
-    nodeVmSize="Standard_B4ms" `
+    nodeVmSize="Standard_DS2_v2" `
     nodeCount=3 `
-    kubernetesVersion="1.29"
+    kubernetesVersion="1.34"
 ```
 
 ## Step 2: Build and Push Docker Images

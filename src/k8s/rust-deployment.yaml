@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rust-hello-api
+  namespace: hello-apis
+  labels:
+    app: rust-hello-api
+    app.kubernetes.io/name: rust-hello-api
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: hello-apis
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rust-hello-api
+  template:
+    metadata:
+      labels:
+        app: rust-hello-api
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: rust-hello-api
+          # Update this image path to your ACR
+          image: <your-acr-name>.azurecr.io/hello-rust-api:latest
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "8080"
+            - name: RUST_LOG
+              value: "info"
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rust-hello-api
+  namespace: hello-apis
+  labels:
+    app: rust-hello-api
+spec:
+  type: LoadBalancer
+  selector:
+    app: rust-hello-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
