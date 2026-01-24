@@ -262,8 +262,6 @@ az deployment group create `
                acrName=acrhelloapis12345
 ```
 
-> ⚠️ ACR name must be globally unique (alphanumeric only)
-
 ---
 
 # Demo: Push Images to ACR
