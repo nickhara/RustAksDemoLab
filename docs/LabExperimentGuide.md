@@ -1,11 +1,21 @@
 # Lab Experiment Guide: Rust and Azure Kubernetes Service
 
-This guide walks you through deploying the Hello World REST APIs to Azure Kubernetes Service (AKS) using Bicep for infrastructure and kubectl for application deployment.
+The intention of this demo is to provide an environment to learn and interact with Rust, and C#, Containers, and Azure Kubernetes. This project implements two basic REST APIs, and includes the deployment configuration files to provision and deploy the services to an AKS cluster:
+
+- **Rust API** - Built with Actix-web framework
+- **C# API** - Built with ASP.NET Core Minimal API
+- **Bicep** - AKS Deployment Configuration
+- **Kubernetes YAML** - Configures and deploys services to the AKS Cluster
+
+Both APIs are containerized and ready for deployment to Azure Kubernetes Service (AKS).
 
 ## Table of Contents
 
 - [Prerequisites](#prerequisites)
-- [Architecture Overview](#architecture-overview)
+- [High Level Architecture](#high-level-architecture)
+- [RESTful API Services](#restful-api-services)
+- [Docker Images for API Services](#docker-images-for-api-services)
+- [Deployment Process](#deployment-process)
 - [Step 1: Azure Infrastructure Deployment (Bicep)](#step-1-azure-infrastructure-deployment-bicep)
 - [Step 2: Build and Push Docker Images](#step-2-build-and-push-docker-images)
 - [Step 3: Configure Kubernetes Manifests](#step-3-configure-kubernetes-manifests)
@@ -13,6 +23,7 @@ This guide walks you through deploying the Hello World REST APIs to Azure Kubern
 - [Step 5: Verify Deployment](#step-5-verify-deployment)
 - [Troubleshooting](#troubleshooting)
 - [Cleanup](#cleanup)
+- [Quick Reference](#quick-reference)
 
 ## Prerequisites
 
@@ -184,8 +195,146 @@ kubectl version --client
 
 > **Tip:** If you have Docker Desktop installed, kubectl is included. Enable it in Docker Desktop > Settings > Kubernetes > Enable Kubernetes.
 
+## High Level Architecture
 
-## Architecture Overview
+### API Information
+
+| API          | Technology | Framework                |
+|--------------|------------|--------------------------|
+| **Rust API** | Rust       | Actix-web                |
+| **C# API**   | .NET 10    | ASP.NET Core Minimal API |
+
+### API Endpoints
+
+| Endpoint  | Method | Description                  |
+| --------- | ------ | ---------------------------- |
+| `/`       | GET    | Returns "Hello, World!"      |
+| `/health` | GET    | Health check for K8s probes  |
+| `/info`   | GET    | API version and runtime info |
+
+### Local Docker Desktop
+
+```mermaid
+┌─────────────────────────────────────────────────────────────────┐
+│                     Local Development Machine                   │
+│                                                                 │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │                    Docker Desktop                          │ │
+│  │                                                            │ │
+│  │   ┌─────────────────────┐   ┌─────────────────────┐        │ │
+│  │   │  hello-rust-api     │   │  hello-csharp-api   │        │ │
+│  │   │  Container          │   │  Container          │        │ │
+│  │   │                     │   │                     │        │ │
+│  │   │  Port: 8080 ────────┼───│  Port: 8080         │        │ │
+│  │   └─────────┬───────────┘   └──────────┬──────────┘        │ │
+│  │             │                          │                   │ │
+│  └─────────────┼──────────────────────────┼───────────────────┘ │
+│                │                          │                     │
+│         Port Mapping               Port Mapping                 │
+│          -p 8080:8080               -p 8081:8080                │
+│                │                          │                     │
+└────────────────┼──────────────────────────┼─────────────────────┘
+                 │                          │
+         localhost:8080              localhost:8081
+                 │                          │
+         ┌───────┴──────────────────────────┴───────┐
+         │              Browser / curl              │
+         └──────────────────────────────────────────┘
+```
+
+### Azure Kubernetes
+
+```mermaid
+┌─────────────────────────────────────────────────────────────┐
+│                   Azure Resource Group                      │
+│  ┌────────────────┐       ┌──────────────────────────────┐  │
+│  │                │       │        AKS Cluster           │  │
+│  │  Azure         │       │  ┌───────────────────────┐   │  │
+│  │  Container     │◄──────│  │  hello-apis namespace │   │  │
+│  │  Registry      │ pull  │  │  ┌────┐    ┌────┐     │   │  │
+│  │                │       │  │  │Rust│    │ C# │     │   │  │
+│  │  - rust-api    │       │  │  │API │    │API │     │   │  │
+│  │  - csharp-api  │       │  │  └──┬─┘    └─┬──┘     │   │  │
+│  └────────────────┘       │  └─────┼────────┼────────┘   │  │
+│                           │     Load Balancer            │  │
+│                           └────────────┬─────────────────┘  │
+└────────────────────────────────────────┼────────────────────┘
+                        Internet
+```
+
+## Development Overview
+
+## RESTful API Services
+
+### Rust API
+
+```powershell
+cd src/rust-api
+cargo run
+# API runs on http://localhost:8080
+```
+
+### C# API
+
+```powershell
+cd src/csharp-api
+dotnet run
+# API runs on http://localhost:8080
+```
+
+## Docker Images for API Services
+
+```powershell
+# Build Rust API
+docker build -t hello-rust-api:latest ./src/rust-api
+
+# Build C# API
+docker build -t hello-csharp-api:latest ./src/csharp-api
+```
+
+### Testing Locally with Docker
+
+```powershell
+# Run Rust API
+docker run -p 8080:8080 hello-rust-api:latest
+
+# Run C# API (use different host port to avoid conflict)
+docker run -p 8081:8080 hello-csharp-api:latest
+```
+
+### Testing with curl
+
+Once the APIs are running (either via `cargo run`/`dotnet run` or Docker), test them with curl:
+
+**Rust API (port 8080):**
+
+```powershell
+# Hello endpoint
+curl http://localhost:8080/
+
+# Health check
+curl http://localhost:8080/health
+
+# API info
+curl http://localhost:8080/info
+```
+
+**C# API (port 8081 when running both in Docker):**
+
+```powershell
+# Hello endpoint
+curl http://localhost:8081/
+
+# Health check
+curl http://localhost:8081/health
+
+# API info
+curl http://localhost:8081/info
+```
+
+> **Tip:** For formatted output in PowerShell: `Invoke-RestMethod -Uri http://localhost:8080/ | ConvertTo-Json`
+
+## Deployment Process
 
 The deployment creates:
 
@@ -550,7 +699,7 @@ kubectl config delete-user "clusterUser_${RESOURCE_GROUP}_${CLUSTER_NAME}"
 
 ```powershell
 $RESOURCE_GROUP = "rg-hello-apis"
-$LOCATION = "eastus"
+$LOCATION = "westus2"
 $CLUSTER_NAME = "aks-hello-apis"
 $ACR_NAME = "acrhelloapis<unique-suffix>"
 $ACR_LOGIN_SERVER = "$ACR_NAME.azurecr.io"
