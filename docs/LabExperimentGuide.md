@@ -214,7 +214,7 @@ kubectl version --client
 
 ### Local Docker Desktop
 
-```mermaid
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                     Local Development Machine                   │
 │                                                                 │
@@ -244,7 +244,7 @@ kubectl version --client
 
 ### Azure Kubernetes
 
-```mermaid
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                   Azure Resource Group                      │
 │  ┌────────────────┐       ┌──────────────────────────────┐  │
