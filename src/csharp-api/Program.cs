@@ -48,14 +48,14 @@ app.MapGet("/health", (ILogger<Program> logger) =>
 app.MapGet("/info", (ILogger<Program> logger) =>
 {
     logger.LogInformation("Info endpoint called");
-    
+
     return Results.Ok(new
     {
         name = "Hello C# API",
         version = "1.0.0",
         language = "C#",
-        framework = "ASP.NET Core 8.0",
-        runtime = RuntimeInformation.FrameworkDescription
+        framework = "ASP.NET Core",
+        runtime = RuntimeInformation.FrameworkDescription  // ".NET 10.0.0"
     });
 });
 
