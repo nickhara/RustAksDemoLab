@@ -66,3 +66,6 @@ publish/
 **/secrets.yml
 **/*-secrets.yaml
 **/*-secrets.yml
+
+# Media files - only commit mp4 and gif (via LFS)
+*.mkv
