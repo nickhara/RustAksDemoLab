@@ -1,6 +1,13 @@
-use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
-use serde::Serialize;
+use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use serde::{Deserialize, Serialize};
 use std::env;
+use std::sync::Arc;
+use lapin::{
+    options::*, types::FieldTable, BasicProperties, Channel, Connection,
+    ConnectionProperties,
+};
+use uuid::Uuid;
+use chrono::Utc;
 
 /// Response structure for the hello endpoint
 #[derive(Serialize)]
@@ -25,6 +32,36 @@ struct InfoResponse {
     language: String,
     framework: String,
     runtime: String,
+}
+
+/// Task message structure for RabbitMQ
+#[derive(Serialize, Deserialize, Clone)]
+struct TaskMessage {
+    id: String,
+    task_type: String,
+    payload: serde_json::Value,
+    timestamp: String,
+}
+
+/// Request structure for sending messages
+#[derive(Deserialize)]
+struct SendMessageRequest {
+    task_type: String,
+    payload: serde_json::Value,
+}
+
+/// Response structure for send endpoint
+#[derive(Serialize)]
+struct SendMessageResponse {
+    success: bool,
+    message_id: String,
+    message: String,
+}
+
+/// Application state containing RabbitMQ channel
+struct AppState {
+    rabbitmq_channel: Arc<Channel>,
+    queue_name: String,
 }
 
 /// Hello World endpoint - Returns a greeting message
@@ -70,26 +107,125 @@ async fn info() -> impl Responder {
     HttpResponse::Ok().json(response)
 }
 
+/// Send message endpoint - Publishes a message to RabbitMQ
+#[post("/send")]
+async fn send_message(
+    req: web::Json<SendMessageRequest>,
+    data: web::Data<AppState>,
+) -> impl Responder {
+    let message_id = Uuid::new_v4().to_string();
+    
+    let task_message = TaskMessage {
+        id: message_id.clone(),
+        task_type: req.task_type.clone(),
+        payload: req.payload.clone(),
+        timestamp: Utc::now().to_rfc3339(),
+    };
+    
+    match serde_json::to_vec(&task_message) {
+        Ok(payload) => {
+            let result = data.rabbitmq_channel
+                .basic_publish(
+                    "",
+                    &data.queue_name,
+                    BasicPublishOptions::default(),
+                    &payload,
+                    BasicProperties::default(),
+                )
+                .await;
+            
+            match result {
+                Ok(_) => {
+                    log::info!("Message {} published to queue", message_id);
+                    HttpResponse::Ok().json(SendMessageResponse {
+                        success: true,
+                        message_id,
+                        message: "Message sent to queue successfully".to_string(),
+                    })
+                }
+                Err(e) => {
+                    log::error!("Failed to publish message: {}", e);
+                    HttpResponse::InternalServerError().json(SendMessageResponse {
+                        success: false,
+                        message_id,
+                        message: format!("Failed to publish message: {}", e),
+                    })
+                }
+            }
+        }
+        Err(e) => {
+            log::error!("Failed to serialize message: {}", e);
+            HttpResponse::InternalServerError().json(SendMessageResponse {
+                success: false,
+                message_id,
+                message: format!("Failed to serialize message: {}", e),
+            })
+        }
+    }
+}
+
+async fn setup_rabbitmq(rabbitmq_url: &str, queue_name: &str) -> Result<Channel, Box<dyn std::error::Error>> {
+    log::info!("Connecting to RabbitMQ at {}", rabbitmq_url);
+    
+    let conn = Connection::connect(
+        rabbitmq_url,
+        ConnectionProperties::default(),
+    )
+    .await?;
+    
+    let channel = conn.create_channel().await?;
+    
+    channel
+        .queue_declare(
+            queue_name,
+            QueueDeclareOptions {
+                durable: true,
+                ..Default::default()
+            },
+            FieldTable::default(),
+        )
+        .await?;
+    
+    log::info!("RabbitMQ connection established, queue '{}' ready", queue_name);
+    
+    Ok(channel)
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // Initialize logger
     env_logger::init_from_env(env_logger::Env::default().default_filter_or("info"));
     
-    // Get port from environment variable or use default
     let port: u16 = env::var("PORT")
         .unwrap_or_else(|_| "8080".to_string())
         .parse()
         .expect("PORT must be a valid number");
     
+    let rabbitmq_url = env::var("RABBITMQ_URL")
+        .unwrap_or_else(|_| "amqp://admin:admin123@localhost:5672".to_string());
+    
+    let queue_name = env::var("RABBITMQ_QUEUE")
+        .unwrap_or_else(|_| "task-queue".to_string());
+    
     let bind_address = format!("0.0.0.0:{}", port);
     
     log::info!("Starting Rust Hello API server on {}", bind_address);
     
-    HttpServer::new(|| {
+    let channel = setup_rabbitmq(&rabbitmq_url, &queue_name)
+        .await
+        .expect("Failed to connect to RabbitMQ");
+    
+    let app_state = web::Data::new(AppState {
+        rabbitmq_channel: Arc::new(channel),
+        queue_name: queue_name.clone(),
+    });
+    
+    HttpServer::new(move || {
         App::new()
+            .app_data(app_state.clone())
             .service(hello)
             .service(health)
             .service(info)
+            .service(send_message)
     })
     .bind(&bind_address)?
     .run()

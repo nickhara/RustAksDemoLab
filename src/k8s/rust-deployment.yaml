@@ -35,6 +35,16 @@ spec:
               value: "8080"
             - name: RUST_LOG
               value: "info"
+            - name: RABBITMQ_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: rabbitmq-config
+                  key: RABBITMQ_URL
+            - name: RABBITMQ_QUEUE
+              valueFrom:
+                configMapKeyRef:
+                  name: rabbitmq-config
+                  key: RABBITMQ_QUEUE
           resources:
             requests:
               cpu: "50m"
