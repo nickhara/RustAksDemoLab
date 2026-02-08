@@ -187,13 +187,13 @@ Write-Host "Monitor deployment:" -ForegroundColor Yellow
 Write-Host "  kubectl get pods -n $Namespace -w" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Watch HPA scaling:" -ForegroundColor Yellow
-Write-Host "  .\scripts\Watch-HPA.ps1 -Namespace $Namespace" -ForegroundColor Gray
+Write-Host "  .\.deploy\Watch-HPA.ps1 -Namespace $Namespace" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Send test messages (once external IP is available):" -ForegroundColor Yellow
-Write-Host "  .\scripts\Send-TestMessages.ps1 -Endpoint http://$rustIp -Count 50" -ForegroundColor Gray
+Write-Host "  .\.test\Send-TestMessages.ps1 -Endpoint http://$rustIp -Count 50" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Run end-to-end test:" -ForegroundColor Yellow
-Write-Host "  .\scripts\Test-E2E.ps1 -ApiEndpoint http://$rustIp -RabbitMqManagement http://$rabbitmqIp" -ForegroundColor Gray
+Write-Host "  .\.test\Test-E2E.ps1 -ApiEndpoint http://$rustIp -RabbitMqManagement http://$rabbitmqIp" -ForegroundColor Gray
 Write-Host ""
 
 Write-Host "✓ Deployment complete!" -ForegroundColor Green
