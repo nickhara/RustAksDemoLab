@@ -42,6 +42,8 @@ For local development, credentials are provided in `appsettings.Development.json
 }
 ```
 
+> **Note**: These are intentionally simple credentials for lab/development use only. For production environments, always use strong, unique passwords stored in Kubernetes Secrets.
+
 Alternatively, use **User Secrets** for better security:
 
 ```bash
