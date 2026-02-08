@@ -108,10 +108,11 @@ docker-compose --profile extended up
 
 ### Common Issues
 
-**Docker Socket Permission Issues**
-```bash
-sudo chmod 666 /var/run/docker.sock
-```
+**Container Build Failures**
+If the dev container fails to build, ensure you have:
+- Docker Desktop running and up-to-date
+- Sufficient disk space for container images
+- Network access to pull base images and features
 
 **Rust Compilation Issues**
 ```bash
