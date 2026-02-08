@@ -25,8 +25,10 @@ public class Worker : BackgroundService
         
         var host = _configuration["RabbitMQ:Host"] ?? "localhost";
         var port = _configuration.GetValue<int>("RabbitMQ:Port", 5672);
-        var username = _configuration["RabbitMQ:Username"] ?? "admin";
-        var password = _configuration["RabbitMQ:Password"] ?? "admin123";
+        var username = _configuration["RabbitMQ:Username"] 
+            ?? throw new InvalidOperationException("RabbitMQ:Username is not configured. Set it via environment variable, user secrets, or appsettings.");
+        var password = _configuration["RabbitMQ:Password"]
+            ?? throw new InvalidOperationException("RabbitMQ:Password is not configured. Set it via environment variable, user secrets, or appsettings.");
         var queue = _configuration["RabbitMQ:Queue"] ?? "task-queue";
 
         var factory = new ConnectionFactory
