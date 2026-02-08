@@ -67,7 +67,10 @@ In Kubernetes, credentials are loaded from **Kubernetes Secrets**:
 ```yaml
 env:
 - name: RabbitMQ__Username
-  value: "admin"
+  valueFrom:
+    secretKeyRef:
+      name: rabbitmq-secret
+      key: username
 - name: RabbitMQ__Password
   valueFrom:
     secretKeyRef:
@@ -79,6 +82,7 @@ Create the secret:
 
 ```bash
 kubectl create secret generic rabbitmq-secret \
+  --from-literal=username=your-secure-username \
   --from-literal=password=your-secure-password \
   -n hello-apis
 ```

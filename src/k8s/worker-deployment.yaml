@@ -28,7 +28,10 @@ spec:
         - name: RabbitMQ__Port
           value: "5672"
         - name: RabbitMQ__Username
-          value: "admin"
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: username
         - name: RabbitMQ__Password
           valueFrom:
             secretKeyRef:
