@@ -29,6 +29,16 @@ This dev container provides a complete development environment for the Rust AKS 
 
 ## Quick Start
 
+### Prerequisites
+
+**Windows Users**: Docker Desktop on Windows requires WSL 2 with a Linux distribution installed:
+1. Install WSL 2: Run `wsl --install` in PowerShell (as Administrator)
+2. Restart your computer if prompted
+3. Verify installation: `wsl -l -v` should show a distribution with version 2
+4. Ensure Docker Desktop is using WSL 2 backend (Settings → General → "Use the WSL 2 based engine")
+
+### Getting Started
+
 1. **Open in Dev Container**: When you open this project in VS Code, you'll be prompted to "Reopen in Container"
 2. **Wait for Setup**: The post-create script will install additional dependencies and set up the environment
 3. **Start Development Services**: Run `docker-compose up` to start RabbitMQ and other services
@@ -120,6 +130,9 @@ If the dev container fails to build, ensure you have:
 
 **Windows-Specific Notes**
 For Windows users:
+- **WSL 2 is required**: Ensure you have WSL 2 installed with at least one Linux distribution
+  - Install: `wsl --install` in PowerShell (Administrator)
+  - Verify: `wsl -l -v` should show a distribution with version 2
 - Ensure Docker Desktop is configured to use WSL 2 backend
 - Keep your project files in the WSL 2 filesystem (not Windows drives) for best performance
 - The container uses docker-outside-of-docker for Windows compatibility
