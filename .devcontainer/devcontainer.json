@@ -12,7 +12,6 @@
       "installUsingApt": false
     },
     "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
-      "moby": false,
       "installDockerBuildx": true,
       "version": "latest",
       "dockerDashComposeVersion": "v2"

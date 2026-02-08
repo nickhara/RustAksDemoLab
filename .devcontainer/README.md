@@ -16,6 +16,8 @@ This dev container provides a complete development environment for the Rust AKS 
 - **Git** with common aliases pre-configured
 
 > **Note**: This dev container uses docker-outside-of-docker, which shares the host Docker daemon. This approach provides cross-platform compatibility with Docker Desktop on Windows, macOS, and Linux.
+> 
+> **Security Note**: Sharing the host Docker daemon means containers have access to all Docker resources on your system. Only use this dev container with trusted code.
 
 ### VS Code Extensions
 - **Rust**: rust-analyzer, LLDB debugger, crates management
