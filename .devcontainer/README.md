@@ -10,10 +10,12 @@ This dev container provides a complete development environment for the Rust AKS 
 - **PowerShell** for script automation
 
 ### Development Tools
-- **Docker-in-Docker** for container development
+- **Docker** (via docker-outside-of-docker) for container development
 - **Azure CLI** with Bicep support
 - **kubectl** for Kubernetes management
 - **Git** with common aliases pre-configured
+
+> **Note**: This dev container uses docker-outside-of-docker, which shares the host Docker daemon. This approach provides cross-platform compatibility with Docker Desktop on Windows, macOS, and Linux.
 
 ### VS Code Extensions
 - **Rust**: rust-analyzer, LLDB debugger, crates management
@@ -113,6 +115,12 @@ If the dev container fails to build, ensure you have:
 - Docker Desktop running and up-to-date
 - Sufficient disk space for container images
 - Network access to pull base images and features
+
+**Windows-Specific Notes**
+For Windows users:
+- Ensure Docker Desktop is configured to use WSL 2 backend
+- Keep your project files in the WSL 2 filesystem (not Windows drives) for best performance
+- The container uses docker-outside-of-docker for Windows compatibility
 
 **Rust Compilation Issues**
 ```bash
