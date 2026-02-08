@@ -56,7 +56,7 @@ try {
     
     $allLogs = @()
     $processedMessages = @{}
-    $totalProcessed = 0
+    $podTotals = @{}
     $errors = 0
     
     foreach ($pod in $pods.items) {
@@ -70,6 +70,8 @@ try {
         
         $logs = Invoke-Expression $logCommand 2>&1
         
+        $podMaxCount = 0
+        
         foreach ($line in $logs) {
             if ($line -match "Successfully processed message ([a-f0-9-]+)\..*Total processed: (\d+)") {
                 $messageId = $matches[1]
@@ -77,7 +79,10 @@ try {
                 
                 if (-not $processedMessages.ContainsKey($messageId)) {
                     $processedMessages[$messageId] = $true
-                    $totalProcessed++
+                }
+                
+                if ($count -gt $podMaxCount) {
+                    $podMaxCount = $count
                 }
             }
             
@@ -87,11 +92,19 @@ try {
             
             if ($line -match "Messages processed: (\d+)") {
                 $workerTotal = [int]$matches[1]
-                if ($workerTotal -gt $totalProcessed) {
-                    $totalProcessed = $workerTotal
+                if ($workerTotal -gt $podMaxCount) {
+                    $podMaxCount = $workerTotal
                 }
             }
         }
+        
+        $podTotals[$podName] = $podMaxCount
+    }
+    
+    # Calculate cluster-wide total by summing all pod totals
+    $totalProcessed = 0
+    foreach ($count in $podTotals.Values) {
+        $totalProcessed += $count
     }
     
     Write-Host ""
