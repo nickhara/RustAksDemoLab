@@ -145,7 +145,7 @@ Write-Host ""
 Write-Host "[Step 5/5] Verifying processing results..." -ForegroundColor Yellow
 Start-Sleep -Seconds 2
 
-$resultsScript = Join-Path (Split-Path $PSScriptRoot -Parent) ".deploy/Get-ProcessingResults.ps1"
+$resultsScript = Join-Path (Join-Path (Split-Path $PSScriptRoot -Parent) ".deploy") "Get-ProcessingResults.ps1"
 & $resultsScript -Namespace $Namespace -TailLines 200
 Write-Host ""
 

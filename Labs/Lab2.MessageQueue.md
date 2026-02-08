@@ -754,7 +754,7 @@ kubectl describe hpa worker-hpa -n hello-apis
 
 ## PowerShell Test Scripts
 
-The `scripts/` directory contains comprehensive test scripts for the message queue system.
+The `.test/` and `.deploy/` directories contain comprehensive test and deployment scripts for the message queue system.
 
 ### Send-TestMessages.ps1
 
@@ -764,16 +764,16 @@ Sends messages to the Rust API `/send` endpoint.
 
 ```powershell
 # Send 10 messages (default)
-.\scripts\Send-TestMessages.ps1
+.\.test\Send-TestMessages.ps1
 
 # Send specific number of messages
-.\scripts\Send-TestMessages.ps1 -Count 50
+.\.test\Send-TestMessages.ps1 -Count 50
 
 # Send to custom endpoint
-.\scripts\Send-TestMessages.ps1 -ApiUrl "http://20.30.40.50" -Count 100
+.\.test\Send-TestMessages.ps1 -ApiUrl "http://20.30.40.50" -Count 100
 
 # Send with custom delay between messages
-.\scripts\Send-TestMessages.ps1 -Count 20 -DelayMs 500
+.\.test\Send-TestMessages.ps1 -Count 20 -DelayMs 500
 ```
 
 **Parameters:**
@@ -804,16 +804,16 @@ Monitors RabbitMQ queue status via Management API.
 
 ```powershell
 # Monitor with default settings
-.\scripts\Monitor-Queue.ps1
+.\.deploy\Monitor-Queue.ps1
 
 # Monitor specific RabbitMQ instance
-.\scripts\Monitor-Queue.ps1 -RabbitMqUrl "http://localhost:15672" -Username "admin" -Password "admin123"
+.\.deploy\Monitor-Queue.ps1 -RabbitMqUrl "http://localhost:15672" -Username "admin" -Password "admin123"
 
 # Monitor with custom refresh interval
-.\scripts\Monitor-Queue.ps1 -RefreshSeconds 5
+.\.deploy\Monitor-Queue.ps1 -RefreshSeconds 5
 
 # Monitor specific queue
-.\scripts\Monitor-Queue.ps1 -QueueName "my-custom-queue"
+.\.deploy\Monitor-Queue.ps1 -QueueName "my-custom-queue"
 ```
 
 **Parameters:**
@@ -845,13 +845,13 @@ Monitors Horizontal Pod Autoscaler metrics and scaling events.
 
 ```powershell
 # Watch HPA with defaults
-.\scripts\Watch-HPA.ps1
+.\.deploy\Watch-HPA.ps1
 
 # Watch with custom namespace
-.\scripts\Watch-HPA.ps1 -Namespace "hello-apis" -HpaName "worker-hpa"
+.\.deploy\Watch-HPA.ps1 -Namespace "hello-apis" -HpaName "worker-hpa"
 
 # Watch with custom refresh rate
-.\scripts\Watch-HPA.ps1 -RefreshSeconds 5
+.\.deploy\Watch-HPA.ps1 -RefreshSeconds 5
 ```
 
 **Parameters:**
@@ -882,13 +882,13 @@ Retrieves processing statistics from worker logs.
 
 ```powershell
 # Get results from all workers
-.\scripts\Get-ProcessingResults.ps1
+.\.deploy\Get-ProcessingResults.ps1
 
 # Get results for specific namespace
-.\scripts\Get-ProcessingResults.ps1 -Namespace "hello-apis"
+.\.deploy\Get-ProcessingResults.ps1 -Namespace "hello-apis"
 
 # Get results with more log lines
-.\scripts\Get-ProcessingResults.ps1 -TailLines 200
+.\.deploy\Get-ProcessingResults.ps1 -TailLines 200
 ```
 
 **Parameters:**
@@ -926,10 +926,10 @@ Comprehensive end-to-end test of the entire system.
 
 ```powershell
 # Run full E2E test
-.\scripts\Test-E2E.ps1
+.\.test\Test-E2E.ps1
 
 # Run with custom parameters
-.\scripts\Test-E2E.ps1 -ApiUrl "http://20.30.40.50" -MessageCount 50 -TimeoutSeconds 300
+.\.test\Test-E2E.ps1 -ApiUrl "http://20.30.40.50" -MessageCount 50 -TimeoutSeconds 300
 ```
 
 **Parameters:**
@@ -988,10 +988,10 @@ Tests HPA auto-scaling behavior under load.
 
 ```powershell
 # Run HPA scaling test
-.\scripts\Test-HPAScaling.ps1
+.\.test\Test-HPAScaling.ps1
 
 # Run with custom load parameters
-.\scripts\Test-HPAScaling.ps1 -ApiUrl "http://20.30.40.50" -LoadDuration 300 -TargetRPS 10
+.\.test\Test-HPAScaling.ps1 -ApiUrl "http://20.30.40.50" -LoadDuration 300 -TargetRPS 10
 ```
 
 **Parameters:**
@@ -1400,9 +1400,9 @@ $env:RabbitMQ__QueueName="task-queue"
 | Scale workers | `kubectl scale deployment worker-service --replicas=5 -n hello-apis` |
 | View worker logs | `kubectl logs -l app=worker-service -n hello-apis -f` |
 | Check queue status | Browse to `http://localhost:15672` (admin/admin123) |
-| Send bulk messages | `.\scripts\Send-TestMessages.ps1 -Count 100` |
-| Run E2E test | `.\scripts\Test-E2E.ps1` |
-| Test HPA scaling | `.\scripts\Test-HPAScaling.ps1` |
+| Send bulk messages | `.\.test\Send-TestMessages.ps1 -Count 100` |
+| Run E2E test | `.\.test\Test-E2E.ps1` |
+| Test HPA scaling | `.\.test\Test-HPAScaling.ps1` |
 
 ### Key Endpoints
 
