@@ -140,7 +140,7 @@ Client → POST /send → Rust API → RabbitMQ Queue → Worker Service
 
 ### Phase 4: Testing & Validation Scripts ✅
 
-**Deliverables**: 6 PowerShell scripts in `scripts/`
+**Deliverables**: 6 PowerShell scripts in `.test/` and `.deploy/`
 
 | Script | Purpose | Key Features |
 |--------|---------|--------------|
@@ -214,7 +214,7 @@ Example:
 
 ### Phase 7: Build & Deployment Scripts ✅
 
-**Deliverables**: 4 automation scripts in `scripts/`
+**Deliverables**: 4 automation scripts in `.build/` and `.deploy/`
 
 | Script | Purpose | Key Features |
 |--------|---------|--------------|

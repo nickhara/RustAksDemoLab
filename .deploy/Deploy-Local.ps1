@@ -98,17 +98,17 @@ try {
     Write-Host "========================================" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "Send test messages:" -ForegroundColor Yellow
-    Write-Host "  .\scripts\Send-TestMessages.ps1 -Count 10" -ForegroundColor Gray
+    Write-Host "  .\.test\Send-TestMessages.ps1 -Count 10" -ForegroundColor Gray
     Write-Host ""
     Write-Host "Monitor queue:" -ForegroundColor Yellow
-    Write-Host "  .\scripts\Monitor-Queue.ps1 -Continuous" -ForegroundColor Gray
+    Write-Host "  .\.deploy\Monitor-Queue.ps1 -Continuous" -ForegroundColor Gray
     Write-Host ""
     Write-Host "View logs:" -ForegroundColor Yellow
     Write-Host "  docker-compose logs -f rust-api" -ForegroundColor Gray
     Write-Host "  docker-compose logs -f worker-service" -ForegroundColor Gray
     Write-Host ""
     Write-Host "Stop services:" -ForegroundColor Yellow
-    Write-Host "  .\scripts\Deploy-Local.ps1 -Down" -ForegroundColor Gray
+    Write-Host "  .\.deploy\Deploy-Local.ps1 -Down" -ForegroundColor Gray
     Write-Host ""
     
 } catch {
