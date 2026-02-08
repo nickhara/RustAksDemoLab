@@ -1,32 +1,85 @@
-# Hello World REST APIs for Azure Kubernetes Service
+# Rust, C#, and Azure Kubernetes Service - Learning Labs
 
-The intention of this project is to provide an environment to learn and interact with Rust, and C#, Containers, and Azure Kubernetes. This project contains two Hello World REST APIs, docker files for both APIs, and the orchestration files to deploy the API services:
+This project provides hands-on labs to learn Rust, C#, Containers, Azure Kubernetes Service (AKS), and advanced Kubernetes features like autoscaling and message queues.
+
+## Available Labs
+
+### Lab 1: Hello World REST APIs (Prerequisite)
+Build and deploy basic REST APIs to AKS.
 
 - **Rust API** - Built with Actix-web framework
 - **C# API** - Built with ASP.NET Core Minimal API
+- **Infrastructure** - Bicep templates for ACR and AKS
+- **Deployment** - Kubernetes manifests and deployment pipelines
+
+📖 **[View Lab 1 Guide](docs/LabExperimentGuide.md)**
+
+### Lab 2: Message Queue with RabbitMQ and Auto-Scaling Workers
+Extend the Rust API with asynchronous message processing using RabbitMQ and auto-scaling worker services.
+
+- **Message Queue** - RabbitMQ for async task processing
+- **Rust API Enhancement** - POST `/send` endpoint to publish messages
+- **C# Worker Service** - Scalable message consumer with simulated processing
+- **Horizontal Pod Autoscaler (HPA)** - Automatic worker scaling based on CPU load
+- **Testing Scripts** - PowerShell tools for load testing and monitoring
+
+📖 **[View Lab 2 Guide](docs/Lab2-MessageQueue.md)**  
+📖 **[HPA Reference Documentation](docs/HPA-Reference.md)**
+
+## Quick Start
 
 Both APIs are containerized and ready for deployment to Azure Kubernetes Service (AKS).
+
+**Lab 1:** Start here to set up the basic infrastructure and APIs.  
+**Lab 2:** Build on Lab 1 to add message queuing and autoscaling capabilities.
 
 ## Project Structure
 
 ```text
 ├── src/
 │   ├── RustKubernetesDemo.sln
-│   ├── rust-api/                 # Rust REST API
+│   ├── rust-api/                 # Rust REST API (Lab 1 & 2)
 │   │   ├── src/
 │   │   │   └── main.rs
 │   │   ├── Cargo.toml
 │   │   └── Dockerfile
-│   ├── csharp-api/              # C# REST API
+│   ├── csharp-api/              # C# REST API (Lab 1)
 │   │   ├── Program.cs
 │   │   ├── HelloApi.csproj
 │   │   └── Dockerfile
+│   ├── worker-service/          # C# Worker Service (Lab 2)
+│   │   └── WorkerService/
+│   │       ├── Worker.cs
+│   │       ├── Program.cs
+│   │       ├── WorkerService.csproj
+│   │       └── Dockerfile
 │   ├── k8s/                     # Kubernetes manifests
 │   │   ├── namespace.yaml
 │   │   ├── rust-deployment.yaml
-│   │   └── csharp-deployment.yaml
+│   │   ├── csharp-deployment.yaml
+│   │   ├── rabbitmq-deployment.yaml    # Lab 2
+│   │   ├── worker-deployment.yaml      # Lab 2
+│   │   └── worker-hpa.yaml             # Lab 2
 │   └── infra/                   # Azure infrastructure (Bicep)
 │       └── main.bicep
+├── .build/                      # Build automation scripts
+│   └── Build-All.ps1
+├── .deploy/                     # Deployment & monitoring scripts (Lab 2)
+│   ├── Deploy-AKS.ps1
+│   ├── Deploy-Local.ps1
+│   ├── Validate-Deployment.ps1
+│   ├── Get-ProcessingResults.ps1
+│   ├── Monitor-Queue.ps1
+│   └── Watch-HPA.ps1
+├── .test/                       # Testing & validation scripts (Lab 2)
+│   ├── Send-TestMessages.ps1
+│   ├── Test-E2E.ps1
+│   └── Test-HPAScaling.ps1
+├── docs/                        # Lab guides and documentation
+│   ├── LabExperimentGuide.md    # Lab 1 Guide
+│   ├── Lab2-MessageQueue.md     # Lab 2 Guide
+│   └── HPA-Reference.md         # HPA Deep Dive
+├── docker-compose.yml           # Local development (Lab 2)
 └── README.md
 ```
 
@@ -333,13 +386,50 @@ curl http://<CSHARP_EXTERNAL_IP>/health
 
 ## API Endpoints
 
-Both APIs expose the same endpoints:
+### Lab 1: REST APIs
+
+Both Rust and C# APIs expose the same endpoints:
 
 | Endpoint | Method | Description |
 | ---------- | -------- | ------------- |
 | `/` | GET | Returns "Hello, World!" message |
 | `/health` | GET | Health check endpoint |
 | `/info` | GET | Returns API information |
+
+### Lab 2: Message Queue
+
+The Rust API gains an additional endpoint in Lab 2:
+
+| Endpoint | Method | Description |
+| ---------- | -------- | ------------- |
+| `/send` | POST | Publishes a message to RabbitMQ queue |
+
+**Example Request:**
+```json
+{
+  "task_type": "process-data",
+  "payload": {
+    "data": "your data here"
+  }
+}
+```
+
+## Learning Objectives
+
+### Lab 1
+- Build REST APIs in Rust and C#
+- Containerize applications with Docker
+- Deploy to Azure Kubernetes Service
+- Manage infrastructure with Bicep
+- Configure Kubernetes resources
+
+### Lab 2
+- Implement asynchronous message processing
+- Use RabbitMQ for message queuing
+- Build background worker services
+- Configure Horizontal Pod Autoscaler (HPA)
+- Monitor and test distributed systems
+- Create operational automation scripts
 
 ## Security Considerations
 

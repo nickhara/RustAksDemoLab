@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"   # AMQP port
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  rust-api:
+    build:
+      context: ./src/rust-api
+      dockerfile: Dockerfile
+    container_name: rust-api
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
+      RABBITMQ_URL: amqp://admin:admin123@rabbitmq:5672
+      RABBITMQ_QUEUE: task-queue
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  worker-service:
+    build:
+      context: ./src/worker-service
+      dockerfile: Dockerfile
+    container_name: worker-service
+    environment:
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: 5672
+      RabbitMQ__Username: admin
+      RabbitMQ__Password: admin123
+      RabbitMQ__Queue: task-queue
+      ProcessingDelayMs: 2000
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - app-network
+    deploy:
+      replicas: 2
+
+volumes:
+  rabbitmq_data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
