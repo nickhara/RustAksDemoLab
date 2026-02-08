@@ -525,14 +525,14 @@ kubectl apply -f src/k8s/worker-hpa.yaml
 kubectl get hpa -n hello-apis
 
 # View HPA details
-kubectl describe hpa worker-hpa -n hello-apis
+kubectl describe hpa worker-service-hpa -n hello-apis
 ```
 
 **Expected HPA output:**
 
 ```text
-NAME         REFERENCE                    TARGETS         MINPODS   MAXPODS   REPLICAS
-worker-hpa   Deployment/worker-service    <unknown>/70%   1         10        1
+NAME                 REFERENCE                    TARGETS         MINPODS   MAXPODS   REPLICAS
+worker-service-hpa   Deployment/worker-service    <unknown>/70%   1         10        1
 ```
 
 > **Note**: `<unknown>` is normal initially. Metrics appear after pods generate CPU load.
@@ -645,20 +645,20 @@ kubectl port-forward svc/rabbitmq 15672:15672 -n hello-apis
 
 ```powershell
 # Watch HPA in real-time
-kubectl get hpa worker-hpa -n hello-apis -w
+kubectl get hpa worker-service-hpa -n hello-apis -w
 
 # Expected output during load:
-# NAME         REFERENCE                    TARGETS    MINPODS   MAXPODS   REPLICAS   AGE
-# worker-hpa   Deployment/worker-service    15%/70%    1         10        1          10m
-# worker-hpa   Deployment/worker-service    85%/70%    1         10        1          11m
-# worker-hpa   Deployment/worker-service    85%/70%    1         10        2          11m
-# worker-hpa   Deployment/worker-service    75%/70%    1         10        3          12m
+# NAME                 REFERENCE                    TARGETS    MINPODS   MAXPODS   REPLICAS   AGE
+# worker-service-hpa   Deployment/worker-service    15%/70%    1         10        1          10m
+# worker-service-hpa   Deployment/worker-service    85%/70%    1         10        1          11m
+# worker-service-hpa   Deployment/worker-service    85%/70%    1         10        2          11m
+# worker-service-hpa   Deployment/worker-service    75%/70%    1         10        3          12m
 ```
 
 **View detailed HPA events:**
 
 ```powershell
-kubectl describe hpa worker-hpa -n hello-apis
+kubectl describe hpa worker-service-hpa -n hello-apis
 
 # Look for events like:
 # Normal   SuccessfulRescale  2m   horizontal-pod-autoscaler  New size: 3; reason: cpu resource utilization (percentage of request) above target
@@ -676,7 +676,7 @@ The Horizontal Pod Autoscaler automatically scales the number of worker pods bas
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: worker-hpa
+  name: worker-service-hpa
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
@@ -730,7 +730,7 @@ Example:
 
 ```powershell
 # Monitor HPA decisions
-kubectl get hpa worker-hpa -n hello-apis -w
+kubectl get hpa worker-service-hpa -n hello-apis -w
 
 # View scaling events
 kubectl get events -n hello-apis --sort-by='.lastTimestamp' | Select-String -Pattern "worker"
@@ -739,7 +739,7 @@ kubectl get events -n hello-apis --sort-by='.lastTimestamp' | Select-String -Pat
 kubectl top pods -l app=worker-service -n hello-apis
 
 # View HPA status details
-kubectl describe hpa worker-hpa -n hello-apis
+kubectl describe hpa worker-service-hpa -n hello-apis
 ```
 
 ### HPA Best Practices
@@ -848,7 +848,7 @@ Monitors Horizontal Pod Autoscaler metrics and scaling events.
 .\scripts\Watch-HPA.ps1
 
 # Watch with custom namespace
-.\scripts\Watch-HPA.ps1 -Namespace "hello-apis" -HpaName "worker-hpa"
+.\scripts\Watch-HPA.ps1 -Namespace "hello-apis" -HpaName "worker-service-hpa"
 
 # Watch with custom refresh rate
 .\scripts\Watch-HPA.ps1 -RefreshSeconds 5
@@ -859,13 +859,13 @@ Monitors Horizontal Pod Autoscaler metrics and scaling events.
 | Parameter | Description | Default |
 |-----------|-------------|---------|
 | `-Namespace` | Kubernetes namespace | `hello-apis` |
-| `-HpaName` | HPA resource name | `worker-hpa` |
+| `-HpaName` | HPA resource name | `worker-service-hpa` |
 | `-RefreshSeconds` | Refresh interval | `3` |
 
 **Output:**
 
 ```text
-Monitoring HPA: worker-hpa in namespace: hello-apis
+Monitoring HPA: worker-service-hpa in namespace: hello-apis
 Press Ctrl+C to stop...
 
 [2024-01-15 10:30:00] Replicas: 2/10 | CPU: 45% (target: 70%) | Status: Stable
@@ -1135,7 +1135,7 @@ kubectl top nodes
 kubectl top pods -n hello-apis
 
 # Check HPA status
-kubectl describe hpa worker-hpa -n hello-apis
+kubectl describe hpa worker-service-hpa -n hello-apis
 
 # Verify worker deployment has resource requests
 kubectl get deployment worker-service -n hello-apis -o yaml | Select-String -Pattern "resources:" -Context 5
@@ -1221,14 +1221,14 @@ kubectl rollout restart deployment rust-api-mq -n hello-apis
 
 ```powershell
 # Check current HPA status
-kubectl get hpa worker-hpa -n hello-apis
-kubectl describe hpa worker-hpa -n hello-apis
+kubectl get hpa worker-service-hpa -n hello-apis
+kubectl describe hpa worker-service-hpa -n hello-apis
 
 # Verify deployment isn't at max replicas
 kubectl get deployment worker-service -n hello-apis
 
 # Check for HPA events/errors
-kubectl get events -n hello-apis --sort-by='.lastTimestamp' | Select-String -Pattern "worker-hpa"
+kubectl get events -n hello-apis --sort-by='.lastTimestamp' | Select-String -Pattern "worker-service-hpa"
 
 # Verify resource requests vs limits
 kubectl describe deployment worker-service -n hello-apis | Select-String -Pattern "Limits\|Requests" -Context 2
@@ -1237,7 +1237,7 @@ kubectl describe deployment worker-service -n hello-apis | Select-String -Patter
 kubectl get deployment worker-service -n hello-apis -o yaml | Select-String -Pattern "strategy"
 
 # Temporarily increase max replicas for testing
-kubectl patch hpa worker-hpa -n hello-apis -p '{"spec":{"maxReplicas":15}}'
+kubectl patch hpa worker-service-hpa -n hello-apis -p '{"spec":{"maxReplicas":15}}'
 ```
 
 ### Debugging Commands Reference
@@ -1396,7 +1396,7 @@ $env:RabbitMQ__QueueName="task-queue"
 | Stop services | `docker-compose down` |
 | Send message | `curl -X POST http://localhost:8080/send -H "Content-Type: application/json" -d '{...}'` |
 | Port-forward RabbitMQ UI | `kubectl port-forward svc/rabbitmq 15672:15672 -n hello-apis` |
-| Watch HPA | `kubectl get hpa worker-hpa -n hello-apis -w` |
+| Watch HPA | `kubectl get hpa worker-service-hpa -n hello-apis -w` |
 | Scale workers | `kubectl scale deployment worker-service --replicas=5 -n hello-apis` |
 | View worker logs | `kubectl logs -l app=worker-service -n hello-apis -f` |
 | Check queue status | Browse to `http://localhost:15672` (admin/admin123) |
@@ -1489,7 +1489,7 @@ kubectl top pods -n hello-apis
 kubectl get hpa -n hello-apis
 
 # Describe HPA (events and details)
-kubectl describe hpa worker-hpa -n hello-apis
+kubectl describe hpa worker-service-hpa -n hello-apis
 
 # Port-forward service
 kubectl port-forward svc/rabbitmq 15672:15672 -n hello-apis
