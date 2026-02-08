@@ -1,0 +1,67 @@
+version: '3.8'
+
+# Development container services
+# This compose file is used by the dev container for local development services
+
+services:
+  # RabbitMQ for message queue development
+  rabbitmq-dev:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq-dev
+    ports:
+      - "5672:5672"   # AMQP port
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    volumes:
+      - rabbitmq_dev_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dev-network
+
+  # Optional: Redis for caching/session management
+  redis-dev:
+    image: redis:7-alpine
+    container_name: redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - dev-network
+    profiles:
+      - extended
+
+  # Optional: PostgreSQL for data persistence
+  postgres-dev:
+    image: postgres:16-alpine
+    container_name: postgres-dev
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: devdb
+      POSTGRES_USER: devuser
+      POSTGRES_PASSWORD: devpass
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    networks:
+      - dev-network
+    profiles:
+      - extended
+
+volumes:
+  rabbitmq_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+  postgres_dev_data:
+    driver: local
+
+networks:
+  dev-network:
+    driver: bridge
