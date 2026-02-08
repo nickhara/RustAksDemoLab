@@ -492,7 +492,7 @@ kubectl logs -l app=rabbitmq -n hello-apis --tail=50
 
 ```powershell
 # Deploy Rust API with /send endpoint
-kubectl apply -f src/k8s/rust-api-mq-deployment.yaml
+kubectl apply -f src/k8s/rust-deployment.yaml
 
 # Wait for pods to be ready
 kubectl wait --for=condition=ready pod -l app=rust-api-mq -n hello-apis --timeout=300s
