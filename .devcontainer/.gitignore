@@ -1,0 +1,12 @@
+# Dev container runtime files
+.devcontainer/.env.local
+.devcontainer/docker-compose.override.yml
+.devcontainer/temp/
+.devcontainer/logs/
+
+# VS Code dev container cache
+.devcontainer/.vscode-server/
+.devcontainer/.vscode-server-insiders/
+
+# User-specific settings
+.devcontainer/user-settings.json

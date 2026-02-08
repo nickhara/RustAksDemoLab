@@ -1,0 +1,176 @@
+{
+  "name": "Rust AKS Demo Lab",
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  
+  "features": {
+    "ghcr.io/devcontainers/features/rust:1": {
+      "version": "latest",
+      "profile": "default"
+    },
+    "ghcr.io/devcontainers/features/dotnet:2": {
+      "version": "10.0",
+      "installUsingApt": false
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "moby": true,
+      "azureDnsAutoDetection": true,
+      "installDockerBuildx": true,
+      "installDockerComposeSwitch": true,
+      "version": "latest",
+      "dockerDashComposeVersion": "v2"
+    },
+    "ghcr.io/devcontainers/features/azure-cli:1": {
+      "installBicep": true,
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
+      "version": "latest",
+      "helm": "latest",
+      "minikube": "none"
+    },
+    "ghcr.io/devcontainers/features/powershell:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "ppa": false,
+      "version": "os-provided"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // Rust extensions
+        "rust-lang.rust-analyzer",
+        "vadimcn.vscode-lldb",
+        "serayuzgur.crates",
+        
+        // C# extensions
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.csdevkit",
+        "ms-dotnettools.vscode-dotnet-runtime",
+        
+        // Azure extensions
+        "ms-vscode.azure-account",
+        "ms-azuretools.azure-dev",
+        "ms-azuretools.vscode-bicep",
+        "ms-azuretools.vscode-azureresourcegroups",
+        "ms-azuretools.vscode-azurefunctions",
+        
+        // Kubernetes extensions
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        "ms-azuretools.vscode-aks",
+        
+        // Container extensions
+        "ms-vscode-remote.remote-containers",
+        "ms-azuretools.vscode-docker",
+        
+        // PowerShell
+        "ms-vscode.powershell",
+        
+        // General development
+        "ms-vscode.vscode-json",
+        "redhat.vscode-yaml",
+        "ms-vscode.cmake-tools",
+        "ms-vscode.makefile-tools",
+        "github.vscode-github-actions",
+        
+        // Markdown and documentation
+        "yzhang.markdown-all-in-one",
+        "davidanson.vscode-markdownlint",
+        "bierner.markdown-mermaid"
+      ],
+      "settings": {
+        // Rust settings
+        "rust-analyzer.check.command": "cargo",
+        "rust-analyzer.checkOnSave.command": "clippy",
+        "rust-analyzer.cargo.features": "all",
+        
+        // C# settings
+        "dotnet.defaultSolution": "src/RustKubernetesDemo.sln",
+        "omnisharp.enableImportCompletion": true,
+        "omnisharp.enableRoslynAnalyzers": true,
+        
+        // Docker settings
+        "docker.containers.groupBy": "None",
+        "docker.containers.sortBy": "CreatedTime",
+        
+        // Terminal settings
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.profiles.linux": {
+          "bash": {
+            "path": "/bin/bash"
+          },
+          "pwsh": {
+            "path": "/opt/microsoft/powershell/7/pwsh"
+          }
+        },
+        
+        // File associations
+        "files.associations": {
+          "*.bicep": "bicep",
+          "*.yaml": "yaml",
+          "*.yml": "yaml"
+        },
+        
+        // Editor settings
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll": "explicit",
+          "source.organizeImports": "explicit"
+        }
+      }
+    }
+  },
+
+  // Container configuration
+  "runArgs": [
+    "--network=host"
+  ],
+  
+  // Port forwarding for development services
+  "forwardPorts": [
+    5672,   // RabbitMQ AMQP
+    15672,  // RabbitMQ Management UI
+    8080,   // Rust API
+    5000,   // C# API (if configured)
+    5001    // C# API HTTPS (if configured)
+  ],
+  
+  "portsAttributes": {
+    "5672": {
+      "label": "RabbitMQ AMQP",
+      "onAutoForward": "silent"
+    },
+    "15672": {
+      "label": "RabbitMQ Management",
+      "onAutoForward": "openBrowser"
+    },
+    "8080": {
+      "label": "Rust API",
+      "onAutoForward": "notify"
+    }
+  },
+
+  // Post-create setup
+  "postCreateCommand": "bash .devcontainer/post-create.sh && chmod +x .devcontainer/validate.sh && chmod +x .devcontainer/quick-check.sh",
+  
+  // Environment variables
+  "containerEnv": {
+    "RUST_LOG": "debug",
+    "DOTNET_NOLOGO": "true",
+    "DOTNET_SKIP_FIRST_TIME_EXPERIENCE": "true",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "true"
+  },
+
+  // Mount the Docker socket for Docker-in-Docker
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ],
+
+  // Dev container lifecycle
+  "shutdownAction": "stopCompose",
+  
+  // User configuration
+  "remoteUser": "codespace"
+}
