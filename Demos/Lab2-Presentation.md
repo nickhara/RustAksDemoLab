@@ -795,7 +795,7 @@ kubectl config delete-context aks-hello-apis
 
 - 📁 GitHub: [RustAksDemoLab](https://github.com/your-repo)
 - 📖 Docs: `docs/Lab2.MessageQueue.md`
-- 🔧 Scripts: `scripts/Test-*.ps1`
+- 🔧 Scripts: `.test/Test-*.ps1` and `.deploy/`
 
 ---
 
