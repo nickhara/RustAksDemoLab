@@ -163,11 +163,6 @@
     "DOTNET_CLI_TELEMETRY_OPTOUT": "true"
   },
 
-  // Mount the Docker socket for Docker-in-Docker
-  "mounts": [
-    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
-  ],
-
   // Dev container lifecycle
   "shutdownAction": "stopCompose",
   
