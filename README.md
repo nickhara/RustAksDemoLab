@@ -62,11 +62,17 @@ Both APIs are containerized and ready for deployment to Azure Kubernetes Service
 │   │   └── worker-hpa.yaml             # Lab 2
 │   └── infra/                   # Azure infrastructure (Bicep)
 │       └── main.bicep
-├── scripts/                     # Testing & validation scripts (Lab 2)
-│   ├── Send-TestMessages.ps1
-│   ├── Monitor-Queue.ps1
-│   ├── Watch-HPA.ps1
+├── .build/                      # Build automation scripts
+│   └── Build-All.ps1
+├── .deploy/                     # Deployment & monitoring scripts (Lab 2)
+│   ├── Deploy-AKS.ps1
+│   ├── Deploy-Local.ps1
+│   ├── Validate-Deployment.ps1
 │   ├── Get-ProcessingResults.ps1
+│   ├── Monitor-Queue.ps1
+│   └── Watch-HPA.ps1
+├── .test/                       # Testing & validation scripts (Lab 2)
+│   ├── Send-TestMessages.ps1
 │   ├── Test-E2E.ps1
 │   └── Test-HPAScaling.ps1
 ├── docs/                        # Lab guides and documentation
