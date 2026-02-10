@@ -37,6 +37,12 @@ This dev container provides a complete development environment for the Rust AKS 
 3. Verify installation: `wsl -l -v` should show a distribution with version 2
 4. Ensure Docker Desktop is using WSL 2 backend (Settings → General → "Use the WSL 2 based engine")
 
+**Recommended for Windows**: Work from within WSL for better performance and avoid disk space issues:
+- Open VS Code → Install "WSL" extension
+- Click green button (bottom-left) → "Connect to WSL"
+- Clone or open your project in the WSL filesystem (e.g., `~/projects/RustAksDemoLab`)
+- Then reopen in container - this uses your WSL distribution instead of docker-desktop
+
 ### Getting Started
 
 1. **Open in Dev Container**: When you open this project in VS Code, you'll be prompted to "Reopen in Container"
@@ -136,6 +142,16 @@ For Windows users:
 - Ensure Docker Desktop is configured to use WSL 2 backend
 - Keep your project files in the WSL 2 filesystem (not Windows drives) for best performance
 - The container uses docker-outside-of-docker for Windows compatibility
+
+**"No space left on device" in docker-desktop WSL**
+If you see this error:
+1. Clean Docker resources: `docker system prune -a --volumes` (removes unused images/volumes)
+2. Increase disk size: Docker Desktop → Settings → Resources → Advanced → "Disk image size"
+3. **Recommended**: Work from WSL Ubuntu instead of Windows:
+   - Install WSL extension in VS Code
+   - Click green button (bottom-left) → "Connect to WSL"
+   - Clone/open project in WSL filesystem (e.g., `~/projects/RustAksDemoLab`)
+   - Reopen in container from there
 
 **Rust Compilation Issues**
 ```bash
