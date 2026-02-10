@@ -1,4 +1,4 @@
-# Horizontal Pod Autoscaler (HPA) - Technical Reference
+# Kubernetes Horizontal Pod Autoscaler (HPA) - Technical Reference
 
 ## Table of Contents
 1. [What is HPA and How It Works](#what-is-hpa-and-how-it-works)

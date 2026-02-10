@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-service
+  namespace: hello-apis-local
+  labels:
+    app: worker-service
+    environment: local
+spec:
+  replicas: 1  # Single replica for local dev
+  selector:
+    matchLabels:
+      app: worker-service
+  template:
+    metadata:
+      labels:
+        app: worker-service
+    spec:
+      containers:
+      - name: worker-service
+        # Local development image - built locally
+        image: hello-worker-service:local
+        imagePullPolicy: Never  # Use local image, don't try to pull
+        env:
+        - name: RabbitMQ__Host
+          valueFrom:
+            configMapKeyRef:
+              name: rabbitmq-config
+              key: RABBITMQ_HOST
+        - name: RabbitMQ__Port
+          value: "5672"
+        - name: RabbitMQ__Username
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: username
+        - name: RabbitMQ__Password
+          valueFrom:
+            secretKeyRef:
+              name: rabbitmq-secret
+              key: password
+        - name: RabbitMQ__Queue
+          valueFrom:
+            configMapKeyRef:
+              name: rabbitmq-config
+              key: RABBITMQ_QUEUE
+        - name: ProcessingDelayMs
+          value: "2000"
+        - name: DOTNET_ENVIRONMENT
+          value: "Development"
+        - name: Logging__LogLevel__Default
+          value: "Debug"  # More verbose for local dev
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "50m"
+          limits:
+            memory: "512Mi"  # More generous for local dev
+            cpu: "500m"

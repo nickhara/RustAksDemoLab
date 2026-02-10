@@ -144,15 +144,18 @@
     }
   },
 
-  // Post-create setup
-  "postCreateCommand": "bash .devcontainer/post-create.sh && chmod +x .devcontainer/validate.sh && chmod +x .devcontainer/quick-check.sh",
+  // Post-create setup - simplified for direct service execution
+  "postCreateCommand": "bash .devcontainer/post-create.sh && chmod +x .devcontainer/validate.sh && chmod +x .devcontainer/quick-check.sh && chmod +x .devcontainer/start-dev.sh && chmod +x .devcontainer/stop-dev.sh && chmod +x .devcontainer/build-local-images.sh && chmod +x .devcontainer/k8s-port-forward.sh && chmod +x .devcontainer/k8s-status.sh && chmod +x .devcontainer/dev-mode-selector.sh",
   
-  // Environment variables
+  // Environment variables for direct service execution
   "containerEnv": {
     "RUST_LOG": "debug",
     "DOTNET_NOLOGO": "true",
     "DOTNET_SKIP_FIRST_TIME_EXPERIENCE": "true",
-    "DOTNET_CLI_TELEMETRY_OPTOUT": "true"
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "true",
+    "RABBITMQ_URL": "amqp://admin:admin123@localhost:5672",
+    "RABBITMQ_QUEUE": "task-queue",
+    "PORT": "8080"
   },
 
   // Dev container lifecycle
