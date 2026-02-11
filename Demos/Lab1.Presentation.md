@@ -72,7 +72,7 @@ The short answer, I wanted to utilize my day of learning, and build a project I 
 
 # Architecture: Local Docker Desktop
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                     Local Development Machine                   │
 │                                                                 │
@@ -104,7 +104,7 @@ The short answer, I wanted to utilize my day of learning, and build a project I 
 
 # Architecture: Azure Kubernetes Service
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                   Azure Resource Group                      │
 │  ┌────────────────┐       ┌──────────────────────────────┐  │
@@ -126,7 +126,7 @@ The short answer, I wanted to utilize my day of learning, and build a project I 
 
 # Project Structure
 
-```
+```text
 ├── src/
 │   ├── rust-api/           # Rust REST API
 │   │   ├── src/main.rs

@@ -118,7 +118,7 @@ The goal was to extend the existing Lab 1 (basic REST APIs) with:
 
 **Message Flow**:
 
-```
+```text
 Client → POST /send → Rust API → RabbitMQ Queue → Worker Service
 ```
 
@@ -195,7 +195,7 @@ rabbitmq-config:
 
 **HPA Behavior Explained**:
 
-```
+```text
 Desired Replicas = ceil(Current Replicas × Current Metric / Target Metric)
 
 Example:
@@ -259,7 +259,7 @@ Example:
 
 ### Message Flow
 
-```
+```text
 ┌─────────────┐      ┌──────────────┐      ┌──────────────┐      ┌─────────────┐
 │   Client    │─────>│   Rust API   │─────>│  RabbitMQ    │─────>│  Worker 1   │
 │             │      │   POST /send │      │  task-queue  │      │  (C# .NET)  │
@@ -282,7 +282,7 @@ Example:
 
 ### Local Development Architecture
 
-```
+```text
 ┌────────────────────────────────────────────────────┐
 │              Docker Desktop                        │
 │                                                    │
@@ -300,7 +300,7 @@ Example:
 
 ### AKS Deployment Architecture
 
-```
+```text
 ┌────────────────────────────────────────────────────────┐
 │              Azure Kubernetes Service                  │
 │  ┌──────────────────────────────────────────────────┐  │
@@ -343,7 +343,7 @@ Example:
 
 **How it Works**:
 
-```
+```text
 Every 15 seconds:
 1. Metrics server collects CPU/memory from pods
 2. HPA controller calculates desired replicas
@@ -353,7 +353,7 @@ Every 15 seconds:
 
 **Formula**:
 
-```
+```text
 desiredReplicas = ceil(currentReplicas × currentMetric / targetMetric)
 ```
 

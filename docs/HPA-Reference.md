@@ -24,7 +24,7 @@ Horizontal Pod Autoscaler (HPA) automatically scales the number of pods in a dep
 
 ### Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────┐
 │                  HPA Controller                      │
 │  (runs every 15 seconds by default)                 │
@@ -475,7 +475,7 @@ scaleDown:
 
 **Example:**
 
-```
+```text
 Time    CPU%    Action
 0:00    80%     Scale up to 4 pods
 0:15    60%     No action (stabilization window)
@@ -547,7 +547,7 @@ behavior:
 
 ### Basic Formula
 
-```
+```text
 desiredReplicas = ceil[currentReplicas × (currentMetricValue / targetMetricValue)]
 ```
 
@@ -562,7 +562,7 @@ desiredReplicas = ceil[currentReplicas × (currentMetricValue / targetMetricValu
 
 **Calculation:**
 
-```
+```text
 Current utilization = (70m / 100m) × 100 = 70%
 Desired replicas = ceil[3 × (70% / 70%)] = ceil[3 × 1.0] = 3
 Action: No scaling (at target)
@@ -570,7 +570,7 @@ Action: No scaling (at target)
 
 **Load increases to 240m total (80m per pod):**
 
-```
+```text
 Current utilization = (80m / 100m) × 100 = 80%
 Desired replicas = ceil[3 × (80% / 70%)] = ceil[3 × 1.14] = ceil[3.42] = 4
 Action: Scale up to 4 pods
@@ -578,7 +578,7 @@ Action: Scale up to 4 pods
 
 **After scaling, load stays same (240m now spread over 4 pods):**
 
-```
+```text
 Current utilization = (60m / 100m) × 100 = 60%
 Desired replicas = ceil[4 × (60% / 70%)] = ceil[4 × 0.86] = ceil[3.44] = 4
 Action: Stay at 4 pods (within tolerance)
@@ -588,7 +588,7 @@ Action: Stay at 4 pods (within tolerance)
 
 HPA won't scale if the desired change is small:
 
-```
+```text
 if |1.0 - (currentMetricValue / targetMetricValue)| < tolerance:
     no scaling
 ```
@@ -597,7 +597,7 @@ Default tolerance: **0.1 (10%)**
 
 **Example with tolerance:**
 
-```
+```text
 Current replicas: 4
 Current metric: 75%
 Target metric: 70%
@@ -610,7 +610,7 @@ Action: No scaling (within tolerance)
 
 When multiple metrics are configured:
 
-```
+```text
 For each metric:
     calculate desired_replicas_i
 
@@ -626,7 +626,7 @@ metrics:
 - Custom metric target: 1000 RPS
 ```
 
-```
+```text
 Current state:
 - 3 replicas
 - CPU: 60% → desired = ceil[3 × (60/70)] = 3
@@ -649,7 +649,7 @@ This prevents scaling down due to monitoring failures.
 
 HPA only considers **Ready** pods:
 
-```
+```text
 currentMetricValue = sum(metric for ready pods) / count(ready pods)
 ```
 
@@ -664,7 +664,7 @@ currentMetricValue = sum(metric for ready pods) / count(ready pods)
 
 When pods are pending (being created):
 
-```
+```text
 If scaling up and pods are pending:
     HPA waits for pods to become Ready before next scale decision
 ```
@@ -895,7 +895,7 @@ containers:
 
 **Error:**
 
-```
+```text
 missing request for cpu
 ```
 
@@ -985,7 +985,7 @@ metrics:
 
 **Reality:**
 
-```
+```text
 Load spike → HPA detects (15s) → Pod scheduled (5-30s) → Container starts (10-60s) → Ready (5-30s)
 Total: 35-135 seconds
 ```
@@ -1254,7 +1254,7 @@ rate(container_cpu_usage_seconds_total{pod=~"worker-service-.*"}[5m]) / on(pod) 
 
 ### KEDA Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────┐
 │                   KEDA Operator                      │
 │  ┌──────────────────┐  ┌─────────────────────────┐ │
@@ -1293,7 +1293,7 @@ kubectl get pods -n keda
 
 **Expected output:**
 
-```
+```text
 NAME                                      READY   STATUS    RESTARTS   AGE
 keda-operator-5d8f8c7b6c-xxxxx            1/1     Running   0          1m
 keda-metrics-apiserver-6f8d9b8b7d-xxxxx   1/1     Running   0          1m
@@ -1307,7 +1307,7 @@ kubectl get apiservice | grep keda
 
 **Expected:**
 
-```
+```text
 v1beta1.external.metrics.k8s.io    keda/keda-metrics-apiserver   True        1m
 ```
 

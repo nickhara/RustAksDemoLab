@@ -83,7 +83,7 @@ Building upon Lab 1, we're adding **asynchronous message processing** with:
 
 # Architecture: Local Docker Compose
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │              Local Development Machine                      │
 │  ┌────────────────────────────────────────────────────────┐ │
@@ -113,7 +113,7 @@ Building upon Lab 1, we're adding **asynchronous message processing** with:
 
 # Architecture: Azure Kubernetes Service
 
-```
+```text
 ┌───────────────────────────────────────────────────────────────┐
 │                    Azure Resource Group                       │
 │  ┌───────────────┐       ┌──────────────────────────────────┐ │
