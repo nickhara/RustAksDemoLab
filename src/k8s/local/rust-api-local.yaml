@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rust-hello-api
+  namespace: hello-apis-local
+  labels:
+    app: rust-hello-api
+    app.kubernetes.io/name: rust-hello-api
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: hello-apis
+    environment: local
+spec:
+  replicas: 1  # Single replica for local dev
+  selector:
+    matchLabels:
+      app: rust-hello-api
+  template:
+    metadata:
+      labels:
+        app: rust-hello-api
+    spec:
+      containers:
+        - name: rust-hello-api
+          # Local development image - built locally
+          image: hello-rust-api:local
+          imagePullPolicy: Never  # Use local image, don't try to pull
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "8080"
+            - name: RUST_LOG
+              value: "debug"  # More verbose for local dev
+            - name: RABBITMQ_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: rabbitmq-config
+                  key: RABBITMQ_URL
+            - name: RABBITMQ_QUEUE
+              valueFrom:
+                configMapKeyRef:
+                  name: rabbitmq-config
+                  key: RABBITMQ_QUEUE
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "500m"  # More generous for local dev
+              memory: "256Mi"
+          # Simplified probes for local development
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rust-hello-api
+  namespace: hello-apis-local
+  labels:
+    app: rust-hello-api
+spec:
+  type: ClusterIP
+  selector:
+    app: rust-hello-api
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP

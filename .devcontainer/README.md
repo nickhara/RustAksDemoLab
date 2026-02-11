@@ -10,10 +10,14 @@ This dev container provides a complete development environment for the Rust AKS 
 - **PowerShell** for script automation
 
 ### Development Tools
-- **Docker-in-Docker** for container development
+- **Docker** (via docker-outside-of-docker) for container development
 - **Azure CLI** with Bicep support
 - **kubectl** for Kubernetes management
 - **Git** with common aliases pre-configured
+
+> **Note**: This dev container uses docker-outside-of-docker, which shares the host Docker daemon. This approach provides cross-platform compatibility with Docker Desktop on Windows, macOS, and Linux.
+> 
+> **Security Note**: Sharing the host Docker daemon means containers have access to all Docker resources on your system. Only use this dev container with trusted code.
 
 ### VS Code Extensions
 - **Rust**: rust-analyzer, LLDB debugger, crates management
@@ -24,6 +28,22 @@ This dev container provides a complete development environment for the Rust AKS 
 - **General**: YAML, JSON, Markdown, and documentation tools
 
 ## Quick Start
+
+### Prerequisites
+
+**Windows Users**: Docker Desktop on Windows requires WSL 2 with a Linux distribution installed:
+1. Install WSL 2: Run `wsl --install` in PowerShell (as Administrator)
+2. Restart your computer if prompted
+3. Verify installation: `wsl -l -v` should show a distribution with version 2
+4. Ensure Docker Desktop is using WSL 2 backend (Settings → General → "Use the WSL 2 based engine")
+
+**Recommended for Windows**: Work from within WSL for better performance and avoid disk space issues:
+- Open VS Code → Install "WSL" extension
+- Click green button (bottom-left) → "Connect to WSL"
+- Clone or open your project in the WSL filesystem (e.g., `~/projects/RustAksDemoLab`)
+- Then reopen in container - this uses your WSL distribution instead of docker-desktop
+
+### Getting Started
 
 1. **Open in Dev Container**: When you open this project in VS Code, you'll be prompted to "Reopen in Container"
 2. **Wait for Setup**: The post-create script will install additional dependencies and set up the environment
@@ -108,10 +128,30 @@ docker-compose --profile extended up
 
 ### Common Issues
 
-**Docker Socket Permission Issues**
-```bash
-sudo chmod 666 /var/run/docker.sock
-```
+**Container Build Failures**
+If the dev container fails to build, ensure you have:
+- Docker Desktop running and up-to-date
+- Sufficient disk space for container images
+- Network access to pull base images and features
+
+**Windows-Specific Notes**
+For Windows users:
+- **WSL 2 is required**: Ensure you have WSL 2 installed with at least one Linux distribution
+  - Install: `wsl --install` in PowerShell (Administrator)
+  - Verify: `wsl -l -v` should show a distribution with version 2
+- Ensure Docker Desktop is configured to use WSL 2 backend
+- Keep your project files in the WSL 2 filesystem (not Windows drives) for best performance
+- The container uses docker-outside-of-docker for Windows compatibility
+
+**"No space left on device" in docker-desktop WSL**
+If you see this error:
+1. Clean Docker resources: `docker system prune -a --volumes` (removes unused images/volumes)
+2. Increase disk size: Docker Desktop → Settings → Resources → Advanced → "Disk image size"
+3. **Recommended**: Work from WSL Ubuntu instead of Windows:
+   - Install WSL extension in VS Code
+   - Click green button (bottom-left) → "Connect to WSL"
+   - Clone/open project in WSL filesystem (e.g., `~/projects/RustAksDemoLab`)
+   - Reopen in container from there
 
 **Rust Compilation Issues**
 ```bash

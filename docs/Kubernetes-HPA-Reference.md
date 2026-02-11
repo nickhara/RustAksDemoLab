@@ -1,4 +1,4 @@
-# Horizontal Pod Autoscaler (HPA) - Technical Reference
+# Kubernetes Horizontal Pod Autoscaler (HPA) - Technical Reference
 
 ## Table of Contents
 

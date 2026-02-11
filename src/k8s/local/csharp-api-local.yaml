@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: csharp-hello-api
+  namespace: hello-apis-local
+  labels:
+    app: csharp-hello-api
+    environment: local
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: csharp-hello-api
+  template:
+    metadata:
+      labels:
+        app: csharp-hello-api
+    spec:
+      containers:
+        - name: csharp-hello-api
+          # Local development image - built locally
+          image: hello-csharp-api:local
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5000
+              protocol: TCP
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Development"
+            - name: ASPNETCORE_URLS
+              value: "http://+:5000"
+            - name: RabbitMQ__Host
+              valueFrom:
+                configMapKeyRef:
+                  name: rabbitmq-config
+                  key: RABBITMQ_HOST
+            - name: RabbitMQ__Port
+              value: "5672"
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: username
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: rabbitmq-secret
+                  key: password
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: csharp-hello-api
+  namespace: hello-apis-local
+  labels:
+    app: csharp-hello-api
+spec:
+  type: ClusterIP
+  selector:
+    app: csharp-hello-api
+  ports:
+    - name: http
+      port: 5000
+      targetPort: 5000
+      protocol: TCP

@@ -11,11 +11,8 @@
       "version": "10.0",
       "installUsingApt": false
     },
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {
-      "moby": true,
-      "azureDnsAutoDetection": true,
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
       "installDockerBuildx": true,
-      "installDockerComposeSwitch": true,
       "version": "latest",
       "dockerDashComposeVersion": "v2"
     },
@@ -123,11 +120,6 @@
     }
   },
 
-  // Container configuration
-  "runArgs": [
-    "--network=host"
-  ],
-  
   // Port forwarding for development services
   "forwardPorts": [
     5672,   // RabbitMQ AMQP
@@ -152,21 +144,19 @@
     }
   },
 
-  // Post-create setup
-  "postCreateCommand": "bash .devcontainer/post-create.sh && chmod +x .devcontainer/validate.sh && chmod +x .devcontainer/quick-check.sh",
+  // Post-create setup - simplified for direct service execution
+  "postCreateCommand": "bash .devcontainer/post-create.sh && chmod +x .devcontainer/validate.sh && chmod +x .devcontainer/quick-check.sh && chmod +x .devcontainer/start-dev.sh && chmod +x .devcontainer/stop-dev.sh && chmod +x .devcontainer/build-local-images.sh && chmod +x .devcontainer/k8s-port-forward.sh && chmod +x .devcontainer/k8s-status.sh && chmod +x .devcontainer/dev-mode-selector.sh",
   
-  // Environment variables
+  // Environment variables for direct service execution
   "containerEnv": {
     "RUST_LOG": "debug",
     "DOTNET_NOLOGO": "true",
     "DOTNET_SKIP_FIRST_TIME_EXPERIENCE": "true",
-    "DOTNET_CLI_TELEMETRY_OPTOUT": "true"
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "true",
+    "RABBITMQ_URL": "amqp://admin:admin123@localhost:5672",
+    "RABBITMQ_QUEUE": "task-queue",
+    "PORT": "8080"
   },
-
-  // Mount the Docker socket for Docker-in-Docker
-  "mounts": [
-    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
-  ],
 
   // Dev container lifecycle
   "shutdownAction": "stopCompose",
