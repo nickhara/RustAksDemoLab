@@ -1,7 +1,8 @@
 {
   "name": "Rust AKS Demo Lab",
-  "image": "mcr.microsoft.com/devcontainers/universal:2",
-  
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
   "features": {
     "ghcr.io/devcontainers/features/rust:1": {
       "version": "latest",
@@ -33,7 +34,6 @@
       "version": "os-provided"
     }
   },
-
   "customizations": {
     "vscode": {
       "extensions": [
@@ -41,37 +41,30 @@
         "rust-lang.rust-analyzer",
         "vadimcn.vscode-lldb",
         "serayuzgur.crates",
-        
         // C# extensions
         "ms-dotnettools.csharp",
         "ms-dotnettools.csdevkit",
         "ms-dotnettools.vscode-dotnet-runtime",
-        
         // Azure extensions
         "ms-vscode.azure-account",
         "ms-azuretools.azure-dev",
         "ms-azuretools.vscode-bicep",
         "ms-azuretools.vscode-azureresourcegroups",
         "ms-azuretools.vscode-azurefunctions",
-        
         // Kubernetes extensions
         "ms-kubernetes-tools.vscode-kubernetes-tools",
         "ms-azuretools.vscode-aks",
-        
         // Container extensions
         "ms-vscode-remote.remote-containers",
         "ms-azuretools.vscode-docker",
-        
         // PowerShell
         "ms-vscode.powershell",
-        
         // General development
         "ms-vscode.vscode-json",
         "redhat.vscode-yaml",
         "ms-vscode.cmake-tools",
         "ms-vscode.makefile-tools",
         "github.vscode-github-actions",
-        
         // Markdown and documentation
         "yzhang.markdown-all-in-one",
         "davidanson.vscode-markdownlint",
@@ -82,16 +75,13 @@
         "rust-analyzer.check.command": "cargo",
         "rust-analyzer.checkOnSave.command": "clippy",
         "rust-analyzer.cargo.features": "all",
-        
         // C# settings
         "dotnet.defaultSolution": "src/RustKubernetesDemo.sln",
         "omnisharp.enableImportCompletion": true,
         "omnisharp.enableRoslynAnalyzers": true,
-        
         // Docker settings
         "docker.containers.groupBy": "None",
         "docker.containers.sortBy": "CreatedTime",
-        
         // Terminal settings
         "terminal.integrated.defaultProfile.linux": "bash",
         "terminal.integrated.profiles.linux": {
@@ -102,14 +92,12 @@
             "path": "/opt/microsoft/powershell/7/pwsh"
           }
         },
-        
         // File associations
         "files.associations": {
           "*.bicep": "bicep",
           "*.yaml": "yaml",
           "*.yml": "yaml"
         },
-        
         // Editor settings
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
@@ -119,16 +107,14 @@
       }
     }
   },
-
   // Port forwarding for development services
   "forwardPorts": [
-    5672,   // RabbitMQ AMQP
-    15672,  // RabbitMQ Management UI
-    8080,   // Rust API
-    5000,   // C# API (if configured)
-    5001    // C# API HTTPS (if configured)
+    5672, // RabbitMQ AMQP
+    15672, // RabbitMQ Management UI
+    8080, // Rust API
+    5000, // C# API (if configured)
+    5001 // C# API HTTPS (if configured)
   ],
-  
   "portsAttributes": {
     "5672": {
       "label": "RabbitMQ AMQP",
@@ -143,10 +129,8 @@
       "onAutoForward": "notify"
     }
   },
-
   // Post-create setup - simplified for direct service execution
   "postCreateCommand": "bash .devcontainer/post-create.sh && chmod +x .devcontainer/validate.sh && chmod +x .devcontainer/quick-check.sh && chmod +x .devcontainer/start-dev.sh && chmod +x .devcontainer/stop-dev.sh && chmod +x .devcontainer/build-local-images.sh && chmod +x .devcontainer/k8s-port-forward.sh && chmod +x .devcontainer/k8s-status.sh && chmod +x .devcontainer/dev-mode-selector.sh",
-  
   // Environment variables for direct service execution
   "containerEnv": {
     "RUST_LOG": "debug",
@@ -157,10 +141,8 @@
     "RABBITMQ_QUEUE": "task-queue",
     "PORT": "8080"
   },
-
   // Dev container lifecycle
   "shutdownAction": "stopCompose",
-  
   // User configuration
   "remoteUser": "codespace"
 }
