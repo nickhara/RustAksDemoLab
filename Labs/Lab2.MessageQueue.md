@@ -28,6 +28,7 @@ This lab demonstrates cloud-native patterns including message queuing, worker po
 This lab builds upon Lab 1. You must complete Lab 1 first to have the foundational infrastructure and understanding.
 
 ### Required from Lab 1
+
 - Azure Container Registry (ACR) deployed
 - AKS Cluster running
 - kubectl configured for your AKS cluster
@@ -715,12 +716,14 @@ Example:
 ### Scaling Triggers
 
 **Scale Up (CPU > 70%)**:
+
 - High message volume in queue
 - Workers processing messages continuously
 - Each worker taking 2+ seconds per message
 - Multiple messages queued per worker
 
 **Scale Down (CPU < 70%)**:
+
 - Queue empty or low message count
 - Workers idle most of the time
 - CPU usage drops below target
@@ -1060,6 +1063,7 @@ Phase 3: Cool Down (180-360s)
 #### RabbitMQ Connection Failures
 
 **Symptoms:**
+
 - Rust API logs: `Failed to connect to RabbitMQ`
 - Worker logs: `Connection refused on port 5672`
 
@@ -1088,6 +1092,7 @@ kubectl rollout restart statefulset rabbitmq -n hello-apis
 #### Workers Not Processing Messages
 
 **Symptoms:**
+
 - Messages queued but not consumed
 - Worker logs show no activity
 - Queue depth increasing
@@ -1117,6 +1122,7 @@ kubectl scale deployment worker-service --replicas=3 -n hello-apis
 #### HPA Not Scaling
 
 **Symptoms:**
+
 - HPA shows `<unknown>` for CPU metrics
 - Worker count remains at 1 despite high load
 - `kubectl describe hpa` shows metric errors
@@ -1159,6 +1165,7 @@ kubectl scale deployment worker-service --replicas=3 -n hello-apis
 #### Messages Stuck in Queue
 
 **Symptoms:**
+
 - Queue depth not decreasing
 - Workers running but messages remain
 - RabbitMQ shows messages as "ready" but not delivered
@@ -1187,6 +1194,7 @@ kubectl exec -it rabbitmq-0 -n hello-apis -- rabbitmqctl list_queues name consum
 #### API /send Endpoint Returns 500 Error
 
 **Symptoms:**
+
 - POST requests to `/send` fail with 500 status
 - API logs show RabbitMQ publish errors
 
@@ -1213,6 +1221,7 @@ kubectl rollout restart deployment rust-api-mq -n hello-apis
 #### High CPU but No Scaling
 
 **Symptoms:**
+
 - Worker pods at 90%+ CPU
 - HPA shows high CPU but doesn't scale
 - Pod count remains at minimum
@@ -1370,6 +1379,7 @@ docker builder prune -a
 ### Environment Variables Summary
 
 **Rust API:**
+
 ```powershell
 $env:RABBITMQ_HOST="rabbitmq"
 $env:RABBITMQ_PORT="5672"
@@ -1379,6 +1389,7 @@ $env:RABBITMQ_QUEUE="task-queue"
 ```
 
 **Worker Service:**
+
 ```powershell
 $env:RabbitMQ__Host="rabbitmq"
 $env:RabbitMQ__Port="5672"
@@ -1417,10 +1428,11 @@ $env:RabbitMQ__QueueName="task-queue"
 
 | Environment | URL | Credentials |
 |-------------|-----|-------------|
-| Local (Docker Compose) | http://localhost:15672 | admin / admin123 |
-| AKS (Port-Forward) | http://localhost:15672 | admin / admin123 |
+| Local (Docker Compose) | <http://localhost:15672> | admin / admin123 |
+| AKS (Port-Forward) | <http://localhost:15672> | admin / admin123 |
 
 **Useful RabbitMQ UI Sections:**
+
 - **Overview**: System health, message rates
 - **Queues**: View `task-queue` details, purge messages
 - **Connections**: Active connections from API/workers
@@ -1429,6 +1441,7 @@ $env:RabbitMQ__QueueName="task-queue"
 ### Message Payload Examples
 
 **Simple task:**
+
 ```json
 {
   "task_type": "process_data",
@@ -1439,6 +1452,7 @@ $env:RabbitMQ__QueueName="task-queue"
 ```
 
 **Batch processing:**
+
 ```json
 {
   "task_type": "batch_process",
@@ -1450,6 +1464,7 @@ $env:RabbitMQ__QueueName="task-queue"
 ```
 
 **Complex task:**
+
 ```json
 {
   "task_type": "data_transformation",
@@ -1530,6 +1545,7 @@ After completing this lab, you have learned:
 ✅ AKS deployment of distributed systems  
 
 **Further Learning:**
+
 - Implement dead-letter queues for failed messages
 - Add message priority and routing
 - Implement request-response patterns with RabbitMQ
@@ -1539,6 +1555,7 @@ After completing this lab, you have learned:
 - Deploy to production with Helm charts
 
 **Resources:**
+
 - [RabbitMQ Documentation](https://www.rabbitmq.com/documentation.html)
 - [Kubernetes HPA Documentation](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
 - [KEDA (Kubernetes Event-driven Autoscaling)](https://keda.sh/)
