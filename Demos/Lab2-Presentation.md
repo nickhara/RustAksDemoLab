@@ -64,7 +64,7 @@ Building upon Lab 1, we're adding **asynchronous message processing** with:
 # New Components
 
 | Component | Technology | Purpose |
-|-----------|------------|---------|
+| ----------- | ------------ | --------- |
 | **Enhanced Rust API** | Actix-web | `/send` endpoint publishes to queue |
 | **RabbitMQ** | Message Broker | Reliable task queuing (AMQP) |
 | **Worker Service** | C# .NET 10 | Background processing (2-sec delay) |
@@ -74,7 +74,7 @@ Building upon Lab 1, we're adding **asynchronous message processing** with:
 ### API Endpoints
 
 | Endpoint | Method | Description |
-|----------|--------|-------------|
+| ---------- | -------- | ------------- |
 | `/send` | POST | Publish message to RabbitMQ queue |
 | `/health` | GET | Health check endpoint |
 | `/info` | GET | API version info |
@@ -194,7 +194,7 @@ Building upon Lab 1, we're adding **asynchronous message processing** with:
 ```
 
 | Field | Type | Description |
-|-------|------|-------------|
+| ------- | ------ | ------------- |
 | `id` | UUID | Unique message identifier |
 | `task_type` | string | Type of task to process |
 | `payload` | object | Task-specific data |
@@ -547,7 +547,7 @@ kubectl get events -n hello-apis --sort-by='.lastTimestamp'
 ### Provided PowerShell Scripts
 
 | Script | Purpose |
-|--------|---------|
+| -------- | --------- |
 | `Test-LocalQueue.ps1` | Test Docker Compose locally |
 | `Test-AKSQueue.ps1` | Test AKS deployment |
 | `Test-HPAScaling.ps1` | Generate load and watch HPA |
@@ -573,7 +573,7 @@ kubectl get events -n hello-apis --sort-by='.lastTimestamp'
 ### Scenario 1: Light Load
 
 | Metric | Value |
-|--------|-------|
+| -------- | ------- |
 | Messages/sec | 0.5 |
 | Worker pods | 1 |
 | CPU utilization | 20% |
@@ -582,7 +582,7 @@ kubectl get events -n hello-apis --sort-by='.lastTimestamp'
 ### Scenario 2: Medium Load
 
 | Metric | Value |
-|--------|-------|
+| -------- | ------- |
 | Messages/sec | 5 |
 | Worker pods | 3-4 |
 | CPU utilization | 70% |
@@ -595,7 +595,7 @@ kubectl get events -n hello-apis --sort-by='.lastTimestamp'
 ### Scenario 3: High Load
 
 | Metric | Value |
-|--------|-------|
+| -------- | ------- |
 | Messages/sec | 15+ |
 | Worker pods | 8-10 |
 | CPU utilization | 80-90% |
@@ -765,7 +765,7 @@ kubectl config delete-context aks-hello-apis
 ### Cloud-Native Patterns
 
 | Pattern | Benefit |
-|---------|---------|
+| --------- | --------- |
 | **Message Queue** | Decouples API from processing |
 | **Worker Pool** | Parallel processing of tasks |
 | **Auto-Scaling** | Elastic compute based on demand |

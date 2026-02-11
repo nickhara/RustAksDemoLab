@@ -14,7 +14,7 @@ This worker service processes messages from RabbitMQ. Configuration is managed t
 ### RabbitMQ Settings
 
 | Setting | Description | Default | Required |
-|---------|-------------|---------|----------|
+| --------- | ------------- | --------- | ---------- |
 | `RabbitMQ__Host` | RabbitMQ server hostname | `localhost` | No |
 | `RabbitMQ__Port` | RabbitMQ server port | `5672` | No |
 | `RabbitMQ__Username` | RabbitMQ username | None | **Yes** |
@@ -24,7 +24,7 @@ This worker service processes messages from RabbitMQ. Configuration is managed t
 ### Processing Settings
 
 | Setting | Description | Default |
-|---------|-------------|---------|
+| --------- | ------------- | --------- |
 | `ProcessingDelayMs` | Simulated processing time (ms) | `2000` |
 
 ## Configuration by Environment
@@ -42,7 +42,8 @@ For local development, credentials are provided in `appsettings.Development.json
 }
 ```
 
-> **Note**: These are intentionally simple credentials for lab/development use only. For production environments, always use strong, unique passwords stored in Kubernetes Secrets.
+> **Note**: These are intentionally simple credentials for lab/development use only.
+> For production environments, always use strong, unique passwords stored in Kubernetes Secrets.
 
 Alternatively, use **User Secrets** for better security:
 
@@ -99,21 +100,21 @@ kubectl create secret generic rabbitmq-secret \
 
 ## Running the Service
 
-### Locally
+### Running Locally
 
 ```bash
 cd src/worker-service/WorkerService
 dotnet run
 ```
 
-### Docker
+### Using Docker
 
 ```bash
 docker build -t worker-service:latest ./src/worker-service
 docker run -e RabbitMQ__Username=admin -e RabbitMQ__Password=admin123 worker-service:latest
 ```
 
-### Docker Compose
+### Using Docker Compose
 
 ```bash
 docker-compose up worker-service

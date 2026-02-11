@@ -56,14 +56,14 @@ The short answer, I wanted to utilize my day of learning, and build a project I 
 # API Details
 
 | API | Technology | Framework |
-|-----|------------|-----------|
+| ----- | ------------ | ----------- |
 | **Rust API** | Rust | Actix-web |
 | **C# API** | .NET 10 | ASP.NET Core Minimal API |
 
 ## Both APIs expose identical endpoints
 
 | Endpoint | Method | Description |
-|----------|--------|-------------|
+| ---------- | -------- | ------------- |
 | `/` | GET | Returns "Hello, World!" |
 | `/health` | GET | Health check for K8s probes |
 | `/info` | GET | API version and runtime info |
@@ -149,7 +149,7 @@ The short answer, I wanted to utilize my day of learning, and build a project I 
 # Prerequisites
 
 | Tool | Purpose |
-|------|---------|
+| ------ | --------- |
 | Docker Desktop | Container runtime |
 | Visual Studio Build Tools | Rust compilation (Windows) |
 | Rust | Rust API development |
@@ -238,7 +238,7 @@ Invoke-RestMethod -Uri http://localhost:8081/    # C#
 ### Key Parameters
 
 | Parameter | Default |
-|-----------|---------|
+| ----------- | --------- |
 | nodeVmSize | Standard_DS2_v2 |
 | nodeCount | 2 |
 | kubernetesVersion | 1.34 |

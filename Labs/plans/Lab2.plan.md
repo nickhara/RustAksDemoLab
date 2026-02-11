@@ -61,7 +61,7 @@ The goal was to extend the existing Lab 1 (basic REST APIs) with:
 ### Technical Stack
 
 | Component | Technology | Version | Purpose |
-|-----------|-----------|---------|---------|
+| ----------- | ----------- | --------- | --------- |
 | **Message Queue** | RabbitMQ | 3.13-management | Async messaging |
 | **Rust API** | Actix-web + lapin | 4.x, 2.x | Message producer |
 | **Worker Service** | .NET Worker + RabbitMQ.Client | 9.0, 6.8.1 | Message consumer |
@@ -113,7 +113,7 @@ The goal was to extend the existing Lab 1 (basic REST APIs) with:
 **Technical Details**:
 
 - Uses lapin crate for AMQP protocol
-- Connection pooling with Arc<Channel>
+- Connection pooling with Arc Channel
 - Environment variables: RABBITMQ_URL, RABBITMQ_QUEUE
 - Queue declared as durable for reliability
 
@@ -161,7 +161,7 @@ Client → POST /send → Rust API → RabbitMQ Queue → Worker Service
 **Deliverables**: 6 PowerShell scripts in `.test/` and `.deploy/`
 
 | Script | Purpose | Key Features |
-|--------|---------|--------------|
+| -------- | --------- | -------------- |
 | **Send-TestMessages.ps1** | Load generator | Burst mode, configurable count, both local/AKS |
 | **Monitor-Queue.ps1** | Queue monitoring | Real-time dashboard, RabbitMQ API integration |
 | **Watch-HPA.ps1** | HPA monitoring | Live scaling status, pod health, events |
@@ -240,7 +240,7 @@ Example:
 **Deliverables**: 4 automation scripts in `.build/` and `.deploy/`
 
 | Script | Purpose | Key Features |
-|--------|---------|--------------|
+| -------- | --------- | -------------- |
 | **Build-All.ps1** | Build all images | ACR push support, version tagging |
 | **Deploy-Local.ps1** | Docker Compose deployment | Health checks, service URLs |
 | **Deploy-AKS.ps1** | AKS deployment | Manifest updates, external IP detection |
@@ -489,7 +489,7 @@ COPY --from=build /app .
 ### Rust API
 
 | Variable | Default | Purpose |
-|----------|---------|---------|
+| ---------- | --------- | --------- |
 | PORT | 8080 | HTTP server port |
 | RUST_LOG | info | Logging level |
 | RABBITMQ_URL | amqp://admin:admin123@localhost:5672 | RabbitMQ connection |
@@ -498,7 +498,7 @@ COPY --from=build /app .
 ### Worker Service
 
 | Variable | Default | Purpose |
-|----------|---------|---------|
+| ---------- | --------- | --------- |
 | RabbitMQ__Host | localhost | RabbitMQ hostname |
 | RabbitMQ__Port | 5672 | AMQP port |
 | RabbitMQ__Username | admin | Authentication |
@@ -509,7 +509,7 @@ COPY --from=build /app .
 ### RabbitMQ
 
 | Variable | Default | Purpose |
-|----------|---------|---------|
+| ---------- | --------- | --------- |
 | RABBITMQ_DEFAULT_USER | admin | Admin username |
 | RABBITMQ_DEFAULT_PASS | admin123 | Admin password |
 
@@ -800,7 +800,7 @@ spec:
 All success criteria met! ✅
 
 | Criterion | Status | Validation Method |
-|-----------|--------|-------------------|
+| ----------- | -------- | ------------------- |
 | Rust API publishes messages | ✅ | POST /send returns success |
 | Workers process messages | ✅ | Logs show "Successfully processed" |
 | HPA scales 1-10 replicas | ✅ | Test-HPAScaling.ps1 passes |

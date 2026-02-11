@@ -5,10 +5,12 @@ This dev container supports **two development workflows** for maximum flexibilit
 ## 🏗️ Development Modes
 
 ### 1️⃣ Direct Execution Mode (Default)
+
 - **Infrastructure services** (RabbitMQ) → Docker containers  
 - **Application services** (Rust API, C# Worker, C# API) → Direct execution in dev container
 
 ### 2️⃣ Local Kubernetes Mode
+
 - **All services** → Deployed to local Kubernetes cluster
 - **Container images** → Built locally and deployed to K8s
 - **Production-like** → Test Kubernetes manifests locally
@@ -16,7 +18,7 @@ This dev container supports **two development workflows** for maximum flexibilit
 ## ✅ Benefits Comparison
 
 | Feature | Direct Execution | Kubernetes Mode |
-|---------|----------------|----------------|
+| --------- | ---------------- | ---------------- |
 | **Development Speed** | ⚡ Fastest (hot reload) | 🔄 Medium (rebuild images) |
 | **Debugging** | 🐞 Native IDE debugging | 📝 kubectl logs |
 | **Environment** | 🏠 Dev container | ☸️ Production-like |
@@ -27,12 +29,15 @@ This dev container supports **two development workflows** for maximum flexibilit
 ## 🚀 Quick Start
 
 ### Mode Selector (Recommended)
+
 ```bash
 ./.devcontainer/dev-mode-selector.sh
 ```
+
 Interactive menu to choose and start your preferred mode.
 
 ### Direct Commands
+
 ```bash
 # Direct Execution Mode
 ./.devcontainer/start-dev.sh
@@ -43,6 +48,7 @@ kubectl apply -f ./src/k8s/local/
 ```
 
 ### VS Code Task Shortcuts
+
 ```bash
 # Quick access to main workflows:
 Ctrl+Shift+B           # Default build task
@@ -55,10 +61,11 @@ Ctrl+Shift+P → Tasks    # Full task menu
 **Tasks are now organized into semantic groups for better VS Code integration:**
 
 ### 📦 BUILD Group - Compilation & Preparation
+
 Access via: **Ctrl+Shift+P** → `Tasks: Run Build Task` or **Ctrl+Shift+B**
 
 | Task | Purpose |
-|------|---------|
+| ------ | --------- |
 | **Build Rust API** | Compile Rust project |
 | **Build C# Services** | Build all .NET projects |
 | **🐳 Build Local Docker Images** | Build container images locally |
@@ -67,29 +74,33 @@ Access via: **Ctrl+Shift+P** → `Tasks: Run Build Task` or **Ctrl+Shift+B**
 | **Clean All** | Clean all artifacts + stop infrastructure |
 
 ### 🧪 TEST Group - Services & Testing
+
 Access via: **Ctrl+Shift+P** → `Tasks: Run Test Task`
 
-#### Direct Execution Mode Tasks:
+#### Direct Execution Mode Tasks
+
 | Task | Purpose |
-|------|---------|
+| ------ | --------- |
 | **Start All Services** | Infrastructure + all application services ⭐ |
 | **Start Infrastructure** | Just RabbitMQ in Docker |
 | **Start Rust API** | Rust service with hot reload |
 | **Start C# Worker** | Worker service with hot reload |
 | **Start C# API** | ASP.NET Core API with hot reload |
 
-#### Kubernetes Mode Tasks:
+#### Kubernetes Mode Tasks
+
 | Task | Purpose |
-|------|---------|
+| ------ | --------- |
 | **☸️ Full K8s Setup** | Complete K8s deployment + port forwarding ⭐ |
 | **☸️ Deploy to Local K8s** | Deploy all services to K8s cluster |
 | **🔌 Start K8s Port Forwarding** | Expose services to localhost |
 | **🗑️ Remove from Local K8s** | Clean up K8s deployment |
 | **📊 K8s Status** | Check deployment status and logs |
 
-#### Utility Tasks:
+#### Utility Tasks
+
 | Task | Purpose |
-|------|---------|
+| ------ | --------- |
 | **🎮 Development Mode Selector** | Interactive mode selection |
 
 ⭐ = Default tasks for each group
@@ -97,6 +108,7 @@ Access via: **Ctrl+Shift+P** → `Tasks: Run Test Task`
 ## 🐞 Debugging
 
 ### Direct Execution Mode
+
 1. Set breakpoints in your code
 2. **F5** → Select debug configuration:
    - **"Debug Rust API"** - Full Rust debugging
@@ -105,7 +117,8 @@ Access via: **Ctrl+Shift+P** → `Tasks: Run Test Task`
    - **"Debug All Services"** - Multi-service debugging
 3. Full debugging with variables, call stack, hot reload
 
-### Kubernetes Mode
+### Kubernetes Debugging
+
 ```bash
 # View all pods
 kubectl get pods -n hello-apis-local
@@ -124,18 +137,19 @@ kubectl exec -it <pod-name> -n hello-apis-local -- bash
 ## 📊 Service URLs (Both Modes)
 
 | Service | URL | Credentials |
-|---------|-----|-------------|
-| RabbitMQ Management | http://localhost:15672 | admin/admin123 |
-| Rust API | http://localhost:8080 | - |
-| C# API | http://localhost:5000 | - |
+| --------- | ----- | ------------- |
+| RabbitMQ Management | <http://localhost:15672> | admin/admin123 |
+| Rust API | <http://localhost:8080> | - |
+| C# API | <http://localhost:5000> | - |
 
-*Worker service runs in background (no web interface)*
+Worker service runs in background (no web interface)
 
 ## 🔧 Environment Variables
 
-### Direct Execution Mode
+### Direct Execution Environment
 
 **Rust API:**
+
 ```bash
 RUST_LOG=debug
 PORT=8080
@@ -144,6 +158,7 @@ RABBITMQ_QUEUE=task-queue
 ```
 
 **C# Worker Service:**
+
 ```bash
 RabbitMQ__Host=localhost
 RabbitMQ__Port=5672
@@ -156,6 +171,7 @@ ProcessingDelayMs=2000
 ### Kubernetes Mode
 
 **Environment variables are managed via K8s ConfigMaps and Secrets:**
+
 - **ConfigMap**: `rabbitmq-config` (URLs, host, queue names)
 - **Secret**: `rabbitmq-secret` (credentials)
 - **Namespace**: `hello-apis-local`
@@ -163,6 +179,7 @@ ProcessingDelayMs=2000
 ## 🔄 Development Workflow Comparison
 
 ### Direct Execution Workflow
+
 ```bash
 # 1. Start infrastructure and services
 # VS Code: Ctrl+Shift+P → "Tasks: Run Test Task" → "Start All Services"
@@ -182,6 +199,7 @@ curl http://localhost:8080/health
 ```
 
 ### Kubernetes Workflow
+
 ```bash
 # 1. Build container images
 # VS Code: Ctrl+Shift+B → "🐳 Build Local Docker Images"
@@ -205,13 +223,15 @@ kubectl logs -f deployment/rust-hello-api -n hello-apis-local
 
 ## 🛠️ Local Kubernetes Prerequisites
 
-### Supported Local Clusters:
+### Supported Local Clusters
+
 - **Docker Desktop Kubernetes** (simplest)
 - **minikube** (`minikube start`)
 - **kind** (`kind create cluster`)  
 - **k3s** (lightweight K8s)
 
-### Verification:
+### Verification
+
 ```bash
 # Check cluster connectivity
 kubectl cluster-info
@@ -225,9 +245,10 @@ kubectl get storageclass
 
 ## 🚨 Troubleshooting
 
-### Direct Execution Mode
+### Direct Execution Issues
 
 **RabbitMQ not starting?**
+
 ```bash
 # Check Docker status
 docker ps | grep rabbitmq
@@ -240,13 +261,15 @@ docker-compose restart rabbitmq
 ```
 
 **Service can't connect to RabbitMQ?**
+
 - Ensure RabbitMQ started first
 - Check URL: `localhost:5672` (not `rabbitmq:5672`)
 - Verify credentials: `admin/admin123`
 
-### Kubernetes Mode
+### Kubernetes Environment
 
 **Images not found?**
+
 ```bash
 # Verify local images exist
 docker images | grep ":local"
@@ -256,6 +279,7 @@ docker images | grep ":local"
 ```
 
 **Pods not starting?**
+
 ```bash
 # Check pod status
 kubectl get pods -n hello-apis-local
@@ -268,6 +292,7 @@ kubectl logs <pod-name> -n hello-apis-local
 ```
 
 **Port forwarding not working?**
+
 ```bash
 # Kill existing port forwarding
 pkill -f "kubectl port-forward"
@@ -277,6 +302,7 @@ pkill -f "kubectl port-forward"
 ```
 
 **Storage issues?**
+
 ```bash
 # Check persistent volumes
 kubectl get pv,pvc -n hello-apis-local
@@ -288,14 +314,16 @@ minikube addons enable storage-provisioner
 
 ## 🎯 When to Use Each Mode
 
-### Use Direct Execution Mode When:
+### Use Direct Execution Mode When
+
 - ✅ Actively developing application code  
 - ✅ Need fast iteration cycles
 - ✅ Want to debug with breakpoints
 - ✅ Testing business logic
 - ✅ Working on API endpoints or background processing
 
-### Use Kubernetes Mode When:
+### Use Kubernetes Mode When
+
 - ✅ Testing Kubernetes manifests
 - ✅ Validating container configurations
 - ✅ Integration testing with K8s features
@@ -311,13 +339,15 @@ minikube addons enable storage-provisioner
 2. **☸️ Kubernetes**: Production-like testing with local cluster
 
 **Semantic task organization for better VS Code integration:**
+
 - **📦 BUILD tasks**: Compilation, Docker images, cleanup
 - **🧪 TEST tasks**: Services, deployment, validation
 - **Quick access**: Ctrl+Shift+B for builds, F1→"Run Test Task" for services
 
 **Switch between modes easily:**
+
 - **🎮 Development Mode Selector** task for guided setup
-- Both modes use the same RabbitMQ configuration 
+- Both modes use the same RabbitMQ configuration
 - Same service URLs for seamless workflow switching
 - Optimized VS Code task integration
 
@@ -325,4 +355,5 @@ minikube addons enable storage-provisioner
 
 ---
 
-🎯 **Result**: Maximum flexibility for both rapid development and thorough Kubernetes testing in a single dev container environment with optimized VS Code workflow integration!
+🎯 **Result**: Maximum flexibility for both rapid development and thorough Kubernetes
+testing in a single dev container environment with optimized VS Code workflow integration!
