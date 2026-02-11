@@ -83,7 +83,7 @@ Building upon Lab 1, we're adding **asynchronous message processing** with:
 
 # Architecture: Local Docker Compose
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │              Local Development Machine                      │
 │  ┌────────────────────────────────────────────────────────┐ │
@@ -113,7 +113,7 @@ Building upon Lab 1, we're adding **asynchronous message processing** with:
 
 # Architecture: Azure Kubernetes Service
 
-```
+```text
 ┌───────────────────────────────────────────────────────────────┐
 │                    Azure Resource Group                       │
 │  ┌───────────────┐       ┌──────────────────────────────────┐ │
@@ -292,8 +292,8 @@ docker-compose logs -f
 
 ### Access Points
 
-- **API:** http://localhost:8080
-- **RabbitMQ Management UI:** http://localhost:15672
+- **API:** <http://localhost:8080>
+- **RabbitMQ Management UI:** <http://localhost:15672>
   - Username: `admin`
   - Password: `admin123`
 
@@ -360,7 +360,7 @@ Write-Host "✅ Sent 100 messages!"
 
 ### RabbitMQ Management UI
 
-1. Open http://localhost:15672
+1. Open <http://localhost:15672>
 2. Login: `admin` / `admin123`
 3. Navigate to **Queues** tab
 4. Monitor **task-queue**:
@@ -803,9 +803,10 @@ kubectl config delete-context aks-hello-apis
 
 ![bg right:50% 80%](https://azure.microsoft.com/svghandler/kubernetes-service/?width=600&height=315)
 
-### Thank you!
+### Thank you
 
 **Key Takeaways:**
+
 - Message queues enable scalable async processing
 - HPA automatically adjusts compute to workload
 - Kubernetes makes scaling seamless

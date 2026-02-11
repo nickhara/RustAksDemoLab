@@ -2,7 +2,8 @@
 
 ## Overview
 
-This document captures the complete planning and implementation process for **Lab 2: Message Queue with RabbitMQ and Auto-Scaling Workers** - an extension of the RustAksDemoLab project that adds asynchronous message processing capabilities.
+This document captures the complete planning and implementation process for **Lab 2: Message Queue with RabbitMQ and
+Auto-Scaling Workers** - an extension of the RustAksDemoLab project that adds asynchronous message processing capabilities.
 
 **Date Created**: February 7, 2026  
 **Implementation Status**: ✅ Complete
@@ -12,6 +13,7 @@ This document captures the complete planning and implementation process for **La
 ## Problem Statement
 
 The goal was to extend the existing Lab 1 (basic REST APIs) with:
+
 1. Asynchronous message processing using RabbitMQ
 2. A scalable C# worker service that processes messages from the queue
 3. Horizontal Pod Autoscaler (HPA) to automatically scale workers based on load
@@ -25,28 +27,33 @@ The goal was to extend the existing Lab 1 (basic REST APIs) with:
 
 ### Architecture Decisions
 
-**1. Message Queue Technology: RabbitMQ**
+#### 1. Message Queue Technology: RabbitMQ
+
 - **Why**: Industry standard, well-documented, easy to deploy
 - **Alternatives considered**: Azure Service Bus (more complex), Redis (less robust)
 - **Decision**: RabbitMQ provides good learning foundation and works locally
 
-**2. Worker Service Language: C#**
+#### 2. Worker Service Language: C# {#worker-service-language}
+
 - **Why**: User requested C# to complement the Rust API
 - **Benefit**: Demonstrates polyglot microservices architecture
 - **Technology**: .NET 9.0 Worker Service template
 
-**3. Message Format: JSON**
+#### 3. Message Format: JSON
+
 - **Structure**: `{ id, task_type, payload, timestamp }`
 - **Why**: Human-readable, easy to debug, flexible payload
 - **Serialization**: serde_json (Rust), System.Text.Json (C#)
 
-**4. Scaling Strategy: CPU-based HPA**
+#### 4. Scaling Strategy: CPU-based HPA
+
 - **Primary**: CPU utilization (70% target)
 - **Why**: Works out-of-box, no additional setup required
 - **Advanced option**: KEDA for queue-depth scaling (documented but optional)
 - **Range**: 1-10 replicas
 
-**5. Processing Simulation: Fixed Delay**
+#### 5. Processing Simulation: Fixed Delay
+
 - **Duration**: 2000ms (2 seconds) per message
 - **Why**: Predictable load for testing, generates CPU usage for HPA
 - **Configuration**: Environment variable for flexibility
@@ -70,10 +77,12 @@ The goal was to extend the existing Lab 1 (basic REST APIs) with:
 ### Phase 1: RabbitMQ Infrastructure ✅
 
 **Deliverables**:
+
 - `docker-compose.yml` - Local development stack
 - `src/k8s/rabbitmq-deployment.yaml` - Kubernetes manifests
 
 **Key Features**:
+
 - Management UI on port 15672
 - AMQP on port 5672
 - Persistent volume (5Gi) for AKS
@@ -81,6 +90,7 @@ The goal was to extend the existing Lab 1 (basic REST APIs) with:
 - Health checks and resource limits
 
 **Design Considerations**:
+
 - Local: Uses Docker volumes for data persistence
 - AKS: PersistentVolumeClaim for durability
 - Two services: ClusterIP (internal) + LoadBalancer (management UI)
@@ -88,10 +98,12 @@ The goal was to extend the existing Lab 1 (basic REST APIs) with:
 ### Phase 2: Rust API Enhancement ✅
 
 **Deliverables**:
+
 - Updated `src/rust-api/Cargo.toml` - Added lapin + uuid dependencies
 - Enhanced `src/rust-api/src/main.rs` - New `/send` endpoint
 
 **Key Features**:
+
 - POST `/send` endpoint accepts JSON with task_type and payload
 - Publishes messages to RabbitMQ queue
 - Generates UUID for each message
@@ -99,19 +111,22 @@ The goal was to extend the existing Lab 1 (basic REST APIs) with:
 - Returns success/failure response
 
 **Technical Details**:
+
 - Uses lapin crate for AMQP protocol
 - Connection pooling with Arc<Channel>
 - Environment variables: RABBITMQ_URL, RABBITMQ_QUEUE
 - Queue declared as durable for reliability
 
 **Message Flow**:
-```
+
+```text
 Client → POST /send → Rust API → RabbitMQ Queue → Worker Service
 ```
 
 ### Phase 3: C# Worker Service ✅
 
 **Deliverables**:
+
 - New project: `src/worker-service/WorkerService/`
 - `Worker.cs` - Message consumer implementation
 - `Dockerfile` - Multi-stage build for worker
@@ -119,6 +134,7 @@ Client → POST /send → Rust API → RabbitMQ Queue → Worker Service
 - `src/k8s/worker-hpa.yaml` - HPA configuration
 
 **Key Features**:
+
 - Async message consumption with RabbitMQ.Client 6.8.1
 - Prefetch count = 1 (one message per worker at a time)
 - Manual acknowledgment (no message loss)
@@ -126,6 +142,7 @@ Client → POST /send → Rust API → RabbitMQ Queue → Worker Service
 - Comprehensive logging (messages processed, errors, metrics)
 
 **HPA Configuration**:
+
 - Min replicas: 1
 - Max replicas: 10
 - Target CPU: 70%
@@ -133,6 +150,7 @@ Client → POST /send → Rust API → RabbitMQ Queue → Worker Service
 - Scale-down: Conservative (300s stabilization window)
 
 **Design Decisions**:
+
 - Background Service pattern (IHostedService)
 - Graceful shutdown handling
 - Error handling: Requeue on transient errors, reject on permanent errors
@@ -152,6 +170,7 @@ Client → POST /send → Rust API → RabbitMQ Queue → Worker Service
 | **Test-HPAScaling.ps1** | HPA behavior testing | Automated scaling scenarios |
 
 **Design Philosophy**:
+
 - Match PowerShell style from Lab 1
 - Colored output for readability
 - Support both local Docker and AKS
@@ -161,11 +180,13 @@ Client → POST /send → Rust API → RabbitMQ Queue → Worker Service
 ### Phase 5: Kubernetes Configuration & HPA ✅
 
 **Deliverables**:
+
 - Updated `src/k8s/rust-deployment.yaml` - Added RabbitMQ env vars
 - Updated `src/k8s/rabbitmq-deployment.yaml` - Added ConfigMap for connection strings
 - ConfigMaps for centralized configuration
 
 **ConfigMap Structure**:
+
 ```yaml
 rabbitmq-config:
   RABBITMQ_URL: "amqp://admin:admin123@rabbitmq:5672"
@@ -174,7 +195,8 @@ rabbitmq-config:
 ```
 
 **HPA Behavior Explained**:
-```
+
+```text
 Desired Replicas = ceil(Current Replicas × Current Metric / Target Metric)
 
 Example:
@@ -186,6 +208,7 @@ Example:
 ### Phase 6: Documentation ✅
 
 **Deliverables**:
+
 1. **docs/Lab2-MessageQueue.md** (1150+ lines)
    - Complete lab guide matching Lab 1 style
    - Architecture diagrams (ASCII art)
@@ -224,6 +247,7 @@ Example:
 | **Validate-Deployment.ps1** | Health validation | 5-check validation suite |
 
 **Design Decisions**:
+
 - Idempotent operations (safe to re-run)
 - Clear status messages with color coding
 - Automatic retry and wait logic
@@ -236,7 +260,7 @@ Example:
 
 ### Message Flow
 
-```
+```text
 ┌─────────────┐      ┌──────────────┐      ┌──────────────┐      ┌─────────────┐
 │   Client    │─────>│   Rust API   │─────>│  RabbitMQ    │─────>│  Worker 1   │
 │             │      │   POST /send │      │  task-queue  │      │  (C# .NET)  │
@@ -259,7 +283,7 @@ Example:
 
 ### Local Development Architecture
 
-```
+```text
 ┌────────────────────────────────────────────────────┐
 │              Docker Desktop                        │
 │                                                    │
@@ -277,7 +301,7 @@ Example:
 
 ### AKS Deployment Architecture
 
-```
+```text
 ┌────────────────────────────────────────────────────────┐
 │              Azure Kubernetes Service                  │
 │  ┌──────────────────────────────────────────────────┐  │
@@ -303,12 +327,14 @@ Example:
 ### 1. Asynchronous Architecture
 
 **Pattern**: Producer-Consumer with Message Queue
+
 - **Decoupling**: API and workers operate independently
 - **Scalability**: Workers scale based on load
 - **Reliability**: Messages persisted in durable queue
 - **Fault Tolerance**: Message acknowledgment prevents loss
 
 **Benefits**:
+
 - API responds immediately (non-blocking)
 - Workers process at their own pace
 - System handles traffic spikes gracefully
@@ -317,7 +343,8 @@ Example:
 ### 2. Horizontal Pod Autoscaler (HPA)
 
 **How it Works**:
-```
+
+```text
 Every 15 seconds:
 1. Metrics server collects CPU/memory from pods
 2. HPA controller calculates desired replicas
@@ -326,16 +353,19 @@ Every 15 seconds:
 ```
 
 **Formula**:
-```
+
+```text
 desiredReplicas = ceil(currentReplicas × currentMetric / targetMetric)
 ```
 
 **Scaling Behavior**:
+
 - **Scale-up**: Fast (can double every 15s)
 - **Scale-down**: Slow (5-minute cooldown)
 - **Why**: Prevent flapping, handle bursty workloads
 
 **Best Practices**:
+
 - Set CPU requests (HPA needs them for percentage calculation)
 - Choose target based on app characteristics (70% is common)
 - Min replicas ≥ 1 for availability
@@ -345,17 +375,20 @@ desiredReplicas = ceil(currentReplicas × currentMetric / targetMetric)
 ### 3. RabbitMQ Configuration
 
 **Queue Settings**:
+
 - **Durable**: true (survives restarts)
 - **Exclusive**: false (multiple consumers)
 - **Auto-delete**: false (manual management)
 - **Prefetch**: 1 (one message per worker)
 
 **Why Prefetch = 1**:
+
 - Even distribution across workers
 - If worker fails, only loses 1 message
 - Better for long-running tasks
 
 **Acknowledgment Strategy**:
+
 - **Ack**: Message processed successfully
 - **Nack + Requeue**: Transient error, try again
 - **Nack + No Requeue**: Permanent error, dead-letter
@@ -363,6 +396,7 @@ desiredReplicas = ceil(currentReplicas × currentMetric / targetMetric)
 ### 4. Container Best Practices
 
 **Multi-stage Builds**:
+
 ```dockerfile
 # Stage 1: Build (large)
 FROM sdk:9.0 AS build
@@ -374,6 +408,7 @@ COPY --from=build /app .
 ```
 
 **Security**:
+
 - Non-root user (UID 1000)
 - Read-only root filesystem where possible
 - Dropped capabilities (no CAP_SYS_ADMIN, etc.)
@@ -382,6 +417,7 @@ COPY --from=build /app .
 ### 5. Testing Strategy
 
 **Layers of Testing**:
+
 1. **Unit**: Message serialization/deserialization
 2. **Integration**: RabbitMQ connection and publishing
 3. **Component**: Individual service health checks
@@ -390,6 +426,7 @@ COPY --from=build /app .
 6. **Chaos**: Failure scenarios (future work)
 
 **Test Scripts Purpose**:
+
 - **Automated**: Repeatable validation
 - **Observable**: Real-time monitoring
 - **Educational**: Learn system behavior
@@ -402,7 +439,8 @@ COPY --from=build /app .
 ### Challenge 1: Rust API RabbitMQ Integration
 
 **Problem**: lapin crate's async nature with Actix-web
-**Solution**: 
+**Solution**:
+
 - Wrap Channel in Arc for shared state
 - Use Actix's Data extractor for dependency injection
 - Initialize connection in main() before server start
@@ -411,6 +449,7 @@ COPY --from=build /app .
 
 **Problem**: RabbitMQ.Client 6.8+ uses async methods
 **Solution**:
+
 - Use AsyncEventingBasicConsumer
 - Handle async callbacks with async/await
 - Proper cancellation token propagation
@@ -419,6 +458,7 @@ COPY --from=build /app .
 
 **Consideration**: HPA requires metrics-server in cluster
 **Solution**:
+
 - AKS has metrics-server by default
 - Documented check: `kubectl get apiservice v1beta1.metrics.k8s.io`
 - Alternative: KEDA for queue-depth metrics (documented)
@@ -427,6 +467,7 @@ COPY --from=build /app .
 
 **Problem**: HPA doesn't exist in Docker Compose
 **Solution**:
+
 - Fixed replicas in docker-compose.yml (2 workers)
 - Manual scaling: `docker-compose up --scale worker-service=5`
 - Focus on message flow testing locally
@@ -435,6 +476,7 @@ COPY --from=build /app .
 
 **Decision**: PowerShell only (not cross-platform)
 **Rationale**:
+
 - Lab 1 uses PowerShell
 - Consistency in learning materials
 - Windows is primary development environment
@@ -478,11 +520,13 @@ COPY --from=build /app .
 ### Scenario 1: Baseline (No Load)
 
 **Expected Behavior**:
+
 - 1 worker pod running (HPA min)
 - Queue depth: 0
 - Worker idle, logging heartbeat every 5s
 
 **Validation**:
+
 ```powershell
 kubectl get hpa -n hello-apis
 # REPLICAS: 1/1
@@ -491,11 +535,13 @@ kubectl get hpa -n hello-apis
 ### Scenario 2: Light Load (50 messages)
 
 **Expected Behavior**:
+
 - Workers process 1 message every ~2s
 - HPA scales to 2-3 pods as CPU rises
 - All messages processed in ~30-40s
 
 **Test**:
+
 ```powershell
 .\scripts\Send-TestMessages.ps1 -Count 50 -BurstMode
 .\scripts\Watch-HPA.ps1
@@ -504,12 +550,14 @@ kubectl get hpa -n hello-apis
 ### Scenario 3: Heavy Load (500 messages)
 
 **Expected Behavior**:
+
 - Queue fills rapidly (500 messages)
 - HPA scales to max (10 pods) within 2-3 minutes
 - Processing rate: ~5 messages/second (10 workers × 0.5 msg/s)
 - Complete processing in ~2 minutes
 
 **Test**:
+
 ```powershell
 .\scripts\Test-HPAScaling.ps1
 ```
@@ -517,12 +565,14 @@ kubectl get hpa -n hello-apis
 ### Scenario 4: Scale-Down (Idle After Load)
 
 **Expected Behavior**:
+
 - After queue empties, workers idle
 - CPU drops below 70% target
 - After 5-minute stabilization, HPA scales down
 - Eventually returns to min (1 pod)
 
 **Observation**:
+
 - Watch-HPA.ps1 shows "Scaling DOWN" status
 - Scale-down is intentionally slow (prevents flapping)
 
@@ -533,10 +583,12 @@ kubectl get hpa -n hello-apis
 ### Issue: Rust API Can't Connect to RabbitMQ
 
 **Symptoms**:
+
 - API fails to start
 - Error: "Failed to connect to RabbitMQ"
 
 **Solutions**:
+
 1. Check RabbitMQ is running: `docker ps` or `kubectl get pods -n hello-apis`
 2. Verify connection string: `echo $RABBITMQ_URL`
 3. Check RabbitMQ logs: `kubectl logs -l app=rabbitmq -n hello-apis`
@@ -545,10 +597,12 @@ kubectl get hpa -n hello-apis
 ### Issue: Workers Not Consuming Messages
 
 **Symptoms**:
+
 - Queue depth increasing
 - Worker logs show no processing activity
 
 **Solutions**:
+
 1. Check worker pods running: `kubectl get pods -l app=worker-service -n hello-apis`
 2. View worker logs: `kubectl logs -l app=worker-service -n hello-apis --tail=50`
 3. Verify queue exists: Monitor-Queue.ps1
@@ -557,10 +611,12 @@ kubectl get hpa -n hello-apis
 ### Issue: HPA Not Scaling
 
 **Symptoms**:
+
 - Load increases but replicas stay at 1
 - HPA shows "Unknown" for metrics
 
 **Solutions**:
+
 1. Check metrics-server: `kubectl get apiservice v1beta1.metrics.k8s.io`
 2. Verify CPU requests set: `kubectl describe deployment worker-service -n hello-apis`
 3. Check HPA status: `kubectl describe hpa worker-service-hpa -n hello-apis`
@@ -569,12 +625,14 @@ kubectl get hpa -n hello-apis
 ### Issue: Messages Lost During Processing
 
 **Symptoms**:
+
 - Send N messages, fewer than N processed
 - No errors in worker logs
 
 **Root Cause**: Worker crashed before acknowledging message
 
 **Solutions**:
+
 1. Check worker restarts: `kubectl get pods -l app=worker-service -n hello-apis` (RESTARTS column)
 2. Increase processing delay to reduce load
 3. Add proper error handling in Worker.cs
@@ -587,14 +645,17 @@ kubectl get hpa -n hello-apis
 ### Throughput
 
 **Single Worker**:
+
 - Processing rate: 0.5 messages/second (2s delay)
 - Queue depth impact: None (prefetch=1)
 
 **Scaled Workers (10 pods)**:
+
 - Processing rate: 5 messages/second
 - Queue clearing time for 500 messages: ~100 seconds
 
 **Bottlenecks**:
+
 1. Processing delay (2s) - intentional for demo
 2. RabbitMQ throughput - not reached in this scenario
 3. Network latency - negligible in same cluster
@@ -602,14 +663,17 @@ kubectl get hpa -n hello-apis
 ### Resource Usage
 
 **Rust API**:
+
 - Memory: ~32-64 MB
 - CPU: ~50-100m (idle), ~200m (under load)
 
 **Worker Service**:
+
 - Memory: ~128-256 MB per pod
 - CPU: ~100-500m per pod (processing)
 
 **RabbitMQ**:
+
 - Memory: ~256-512 MB
 - CPU: ~250-500m
 - Storage: 5Gi PVC (messages + metadata)
@@ -617,11 +681,13 @@ kubectl get hpa -n hello-apis
 ### Cost Estimation (AKS)
 
 **Assumptions**:
+
 - Region: West US 2
 - Node Size: Standard_DS2_v2 ($0.139/hour)
 - 2 nodes cluster
 
 **Monthly Cost** (rough estimate):
+
 - AKS nodes: 2 × $0.139 × 730 hours = ~$203
 - Load Balancer: ~$20
 - Storage (5Gi): ~$1
@@ -639,11 +705,13 @@ kubectl get hpa -n hello-apis
 **Enhancement**: KEDA ScaledObject based on queue depth (proactive)
 
 **Benefits**:
+
 - Scale based on work waiting (not CPU)
 - More responsive to traffic patterns
 - Better cost optimization
 
 **Implementation** (documented in HPA-Reference.md):
+
 ```yaml
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
@@ -666,6 +734,7 @@ spec:
 **Purpose**: Handle permanently failed messages
 
 **Implementation**:
+
 - Configure dead-letter exchange in RabbitMQ
 - Route failed messages after N retries
 - Separate monitoring for DLQ
@@ -675,6 +744,7 @@ spec:
 **Use Case**: Urgent tasks need faster processing
 
 **Implementation**:
+
 - Priority queue in RabbitMQ
 - Worker consumes high-priority first
 - API accepts priority level in payload
@@ -684,6 +754,7 @@ spec:
 **Tools**: Jaeger, OpenTelemetry
 
 **Benefits**:
+
 - Track message flow end-to-end
 - Identify bottlenecks
 - Performance optimization
@@ -693,6 +764,7 @@ spec:
 **Tools**: Prometheus, Grafana
 
 **Metrics to Track**:
+
 - Messages published/second
 - Messages processed/second
 - Queue depth over time
@@ -705,6 +777,7 @@ spec:
 **Use Case**: Zero-downtime updates
 
 **Implementation**:
+
 - Deploy new version alongside old
 - Switch traffic after validation
 - Rollback if issues detected
@@ -714,6 +787,7 @@ spec:
 **Purpose**: Test system resilience
 
 **Scenarios**:
+
 - Kill random worker pods
 - Increase network latency
 - Simulate RabbitMQ outage
@@ -777,17 +851,17 @@ All success criteria met! ✅
 
 ### Official Documentation
 
-- **RabbitMQ**: https://www.rabbitmq.com/documentation.html
-- **Kubernetes HPA**: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
-- **KEDA**: https://keda.sh/docs/
-- **Actix-web**: https://actix.rs/docs/
-- **.NET Worker Services**: https://learn.microsoft.com/en-us/dotnet/core/extensions/workers
+- **RabbitMQ**: <https://www.rabbitmq.com/documentation.html>
+- **Kubernetes HPA**: <https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/>
+- **KEDA**: <https://keda.sh/docs/>
+- **Actix-web**: <https://actix.rs/docs/>
+- **.NET Worker Services**: <https://learn.microsoft.com/en-us/dotnet/core/extensions/workers>
 
 ### Tools & Libraries
 
-- **lapin** (Rust RabbitMQ client): https://github.com/CleverCloud/lapin
-- **RabbitMQ.Client** (C# client): https://www.nuget.org/packages/RabbitMQ.Client
-- **Marp** (Presentation): https://marp.app/
+- **lapin** (Rust RabbitMQ client): <https://github.com/CleverCloud/lapin>
+- **RabbitMQ.Client** (C# client): <https://www.nuget.org/packages/RabbitMQ.Client>
+- **Marp** (Presentation): <https://marp.app/>
 
 ### Related Projects
 
@@ -799,13 +873,15 @@ All success criteria met! ✅
 ## Conclusion
 
 This implementation successfully created a production-ready foundation for learning:
+
 - Asynchronous message processing with RabbitMQ
 - Microservices architecture (Rust + C#)
 - Kubernetes autoscaling (HPA)
 - Operational excellence (monitoring, testing, automation)
 - Infrastructure as Code (Docker Compose, K8s manifests)
 
-The comprehensive documentation (1800+ lines) and tooling (10 scripts) make this an excellent educational resource that builds naturally on Lab 1's foundation.
+The comprehensive documentation (1800+ lines) and tooling (10 scripts) make this an excellent educational resource that
+builds naturally on Lab 1's foundation.
 
 **Total Lines of Code/Config**: ~5000
 **Total Documentation**: ~1800 lines

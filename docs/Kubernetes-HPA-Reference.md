@@ -1,6 +1,7 @@
 # Kubernetes Horizontal Pod Autoscaler (HPA) - Technical Reference
 
 ## Table of Contents
+
 1. [What is HPA and How It Works](#what-is-hpa-and-how-it-works)
 2. [HPA API Versions and Feature Comparison](#hpa-api-versions-and-feature-comparison)
 3. [HPA YAML Configuration Deep Dive](#hpa-yaml-configuration-deep-dive)
@@ -18,10 +19,13 @@
 ## What is HPA and How It Works
 
 ### Overview
-Horizontal Pod Autoscaler (HPA) automatically scales the number of pods in a deployment, replica set, or stateful set based on observed metrics like CPU utilization, memory usage, or custom application metrics.
+
+Horizontal Pod Autoscaler (HPA) automatically scales the number of pods in a deployment, replica set, or stateful set
+based on observed metrics like CPU utilization, memory usage, or custom application metrics.
 
 ### Architecture
-```
+
+```text
 ┌─────────────────────────────────────────────────────┐
 │                  HPA Controller                      │
 │  (runs every 15 seconds by default)                 │
@@ -42,6 +46,7 @@ Horizontal Pod Autoscaler (HPA) automatically scales the number of pods in a dep
 ```
 
 ### Control Loop
+
 1. **Metric Collection** (every 15s): HPA controller queries the Metrics API
 2. **Calculation**: Computes desired replicas based on current vs target metrics
 3. **Decision**: Applies scaling behaviors and stabilization windows
@@ -49,6 +54,7 @@ Horizontal Pod Autoscaler (HPA) automatically scales the number of pods in a dep
 5. **Wait**: Kubernetes scheduler provisions/terminates pods
 
 ### Prerequisites
+
 - **Metrics Server**: Must be installed for resource metrics (CPU/memory)
 - **Resource Requests**: Pods must have CPU/memory requests defined
 - **RBAC**: HPA controller needs permissions to read metrics and scale deployments
@@ -86,6 +92,7 @@ Horizontal Pod Autoscaler (HPA) automatically scales the number of pods in a dep
 ## HPA YAML Configuration Deep Dive
 
 ### Complete Annotated Example
+
 Here's the actual HPA configuration from our worker service with detailed annotations:
 
 ```yaml
@@ -177,6 +184,7 @@ spec:
 ### Field Reference
 
 #### Metadata Section
+
 ```yaml
 metadata:
   name: <hpa-name>           # Required: Unique identifier
@@ -188,6 +196,7 @@ metadata:
 ```
 
 #### Scale Target Reference
+
 ```yaml
 scaleTargetRef:
   apiVersion: apps/v1        # Target resource API version
@@ -196,6 +205,7 @@ scaleTargetRef:
 ```
 
 #### Replica Limits
+
 ```yaml
 minReplicas: 1               # Default: 1 if omitted
 maxReplicas: 10              # Required: No default
@@ -210,6 +220,7 @@ HPA supports four metric types for scaling decisions:
 ### 1. Resource Metrics (CPU/Memory)
 
 #### CPU Utilization
+
 ```yaml
 metrics:
 - type: Resource
@@ -221,11 +232,13 @@ metrics:
 ```
 
 **How it works:**
+
 - Requires CPU requests defined in pod spec
 - Formula: `(actual CPU usage / CPU request) × 100`
 - Example: Request 100m, using 70m = 70% utilization
 
 #### CPU Average Value
+
 ```yaml
 metrics:
 - type: Resource
@@ -239,6 +252,7 @@ metrics:
 **Use case:** When you want consistent CPU allocation regardless of requests.
 
 #### Memory Utilization
+
 ```yaml
 metrics:
 - type: Resource
@@ -252,6 +266,7 @@ metrics:
 **Warning:** Memory-based scaling is tricky because memory isn't easily freed in many applications.
 
 #### Memory Average Value
+
 ```yaml
 metrics:
 - type: Resource
@@ -276,11 +291,13 @@ metrics:
 ```
 
 **Requirements:**
+
 - Custom metrics adapter (e.g., Prometheus Adapter, Datadog, Stackdriver)
 - Metrics must be exposed per-pod
 - Adapter translates metrics to Kubernetes custom metrics API
 
 **Common use cases:**
+
 - HTTP requests per second
 - Queue message processing rate
 - Active connections per pod
@@ -304,11 +321,13 @@ metrics:
 ```
 
 **Use cases:**
+
 - Scale based on Ingress traffic
 - Scale based on Service load
 - Scale based on other cluster resources
 
 **Difference from Pods metrics:**
+
 - Object metrics are aggregate (total), not per-pod
 - Target is absolute value, not average per pod
 
@@ -329,10 +348,12 @@ metrics:
 ```
 
 **Requirements:**
+
 - External metrics adapter (e.g., KEDA, Datadog, Azure Monitor Adapter)
 - Connection to external data source
 
 **Common use cases:**
+
 - Cloud message queues (SQS, Azure Queue, Pub/Sub)
 - Database connection pools
 - External API rate limits
@@ -366,6 +387,7 @@ metrics:
 ```
 
 **Logic:** HPA calculates desired replicas for each metric, then uses the **maximum** value.
+
 - CPU suggests 5 replicas
 - Memory suggests 7 replicas
 - HTTP requests suggest 4 replicas
@@ -379,7 +401,8 @@ Scaling behaviors control **how** and **when** scaling occurs, not just the targ
 
 ### Scale-Up Configuration
 
-#### Stabilization Window
+#### Scale-Up Stabilization Window
+
 ```yaml
 scaleUp:
   stabilizationWindowSeconds: 0    # Default: 0 (no delay)
@@ -389,9 +412,10 @@ scaleUp:
 - `60`: Wait 60s and only scale if metrics stay high (conservative)
 - Use case for non-zero: Avoid scaling for brief spikes
 
-#### Policies
+#### Scale-Up Policies
 
 **Percentage-based:**
+
 ```yaml
 policies:
 - type: Percent
@@ -400,6 +424,7 @@ policies:
 ```
 
 **Pod-count-based:**
+
 ```yaml
 policies:
 - type: Pods
@@ -408,6 +433,7 @@ policies:
 ```
 
 **Multiple policies example:**
+
 ```yaml
 scaleUp:
   stabilizationWindowSeconds: 0
@@ -422,6 +448,7 @@ scaleUp:
 ```
 
 **Scenarios:**
+
 - 2 replicas: Max(100% = 4 total, +4 pods = 6 total) = **6 replicas**
 - 10 replicas: Max(100% = 20 total, +4 pods = 14 total) = **20 replicas**
 
@@ -435,7 +462,8 @@ selectPolicy: Disabled  # Disable scale-up entirely
 
 ### Scale-Down Configuration
 
-#### Stabilization Window
+#### Scale-Down Stabilization Window
+
 ```yaml
 scaleDown:
   stabilizationWindowSeconds: 300    # Default: 300 (5 minutes)
@@ -447,7 +475,8 @@ scaleDown:
 - Typical values: 60-600 seconds
 
 **Example:**
-```
+
+```text
 Time    CPU%    Action
 0:00    80%     Scale up to 4 pods
 0:15    60%     No action (stabilization window)
@@ -455,9 +484,10 @@ Time    CPU%    Action
 5:01    50%     Now can scale down (window passed)
 ```
 
-#### Policies
+#### Scale-Down Policies
 
 Conservative scale-down:
+
 ```yaml
 scaleDown:
   stabilizationWindowSeconds: 300
@@ -469,6 +499,7 @@ scaleDown:
 ```
 
 Aggressive scale-down (cost optimization):
+
 ```yaml
 scaleDown:
   stabilizationWindowSeconds: 60   # Shorter window
@@ -506,6 +537,7 @@ behavior:
 ```
 
 **Behavior:**
+
 - **Scale-up:** Aggressive (double or +4 pods every 15s)
 - **Scale-down:** Conservative (max 50% or 2 pods per minute, wait 5 min)
 - **Result:** Quick response to load, slow stabilization
@@ -516,34 +548,38 @@ behavior:
 
 ### Basic Formula
 
-```
+```text
 desiredReplicas = ceil[currentReplicas × (currentMetricValue / targetMetricValue)]
 ```
 
 ### CPU Utilization Example
 
 **Setup:**
+
 - Current replicas: 3
 - CPU request per pod: 100m
 - Target CPU utilization: 70%
 - Current CPU usage: 210m total (70m per pod)
 
 **Calculation:**
-```
+
+```text
 Current utilization = (70m / 100m) × 100 = 70%
 Desired replicas = ceil[3 × (70% / 70%)] = ceil[3 × 1.0] = 3
 Action: No scaling (at target)
 ```
 
 **Load increases to 240m total (80m per pod):**
-```
+
+```text
 Current utilization = (80m / 100m) × 100 = 80%
 Desired replicas = ceil[3 × (80% / 70%)] = ceil[3 × 1.14] = ceil[3.42] = 4
 Action: Scale up to 4 pods
 ```
 
 **After scaling, load stays same (240m now spread over 4 pods):**
-```
+
+```text
 Current utilization = (60m / 100m) × 100 = 60%
 Desired replicas = ceil[4 × (60% / 70%)] = ceil[4 × 0.86] = ceil[3.44] = 4
 Action: Stay at 4 pods (within tolerance)
@@ -553,7 +589,7 @@ Action: Stay at 4 pods (within tolerance)
 
 HPA won't scale if the desired change is small:
 
-```
+```text
 if |1.0 - (currentMetricValue / targetMetricValue)| < tolerance:
     no scaling
 ```
@@ -561,7 +597,8 @@ if |1.0 - (currentMetricValue / targetMetricValue)| < tolerance:
 Default tolerance: **0.1 (10%)**
 
 **Example with tolerance:**
-```
+
+```text
 Current replicas: 4
 Current metric: 75%
 Target metric: 70%
@@ -574,7 +611,7 @@ Action: No scaling (within tolerance)
 
 When multiple metrics are configured:
 
-```
+```text
 For each metric:
     calculate desired_replicas_i
 
@@ -582,6 +619,7 @@ final_desired_replicas = max(desired_replicas_1, desired_replicas_2, ..., desire
 ```
 
 **Example:**
+
 ```yaml
 metrics:
 - CPU target: 70%
@@ -589,7 +627,7 @@ metrics:
 - Custom metric target: 1000 RPS
 ```
 
-```
+```text
 Current state:
 - 3 replicas
 - CPU: 60% → desired = ceil[3 × (60/70)] = 3
@@ -602,6 +640,7 @@ Final desired replicas = max(3, 4, 4) = 4
 ### Absent/Unavailable Metrics
 
 If a metric is unavailable:
+
 - **Scale-up:** Metric is skipped (ignored)
 - **Scale-down:** Assumes metric is at target (prevents scale-down)
 
@@ -611,11 +650,12 @@ This prevents scaling down due to monitoring failures.
 
 HPA only considers **Ready** pods:
 
-```
+```text
 currentMetricValue = sum(metric for ready pods) / count(ready pods)
 ```
 
 **Example:**
+
 - 4 pods total
 - 3 ready, 1 not ready
 - Metric sum: 180
@@ -625,7 +665,7 @@ currentMetricValue = sum(metric for ready pods) / count(ready pods)
 
 When pods are pending (being created):
 
-```
+```text
 If scaling up and pods are pending:
     HPA waits for pods to become Ready before next scale decision
 ```
@@ -639,6 +679,7 @@ This prevents "runaway scaling" where HPA keeps adding pods before previous ones
 ### 1. Always Define Resource Requests
 
 **Bad:**
+
 ```yaml
 containers:
 - name: app
@@ -647,6 +688,7 @@ containers:
 ```
 
 **Good:**
+
 ```yaml
 containers:
 - name: app
@@ -668,6 +710,7 @@ maxReplicas: 50   # Prevent cost overruns, should handle peak × 1.5
 ```
 
 **Considerations:**
+
 - **minReplicas:** Ensure baseline availability and performance
 - **maxReplicas:** Consider infrastructure limits, cost budgets, downstream capacity
 - Monitor actual usage and adjust over time
@@ -685,6 +728,7 @@ behavior:
 ```
 
 **Why:**
+
 - Users experience scale-up lag gracefully (slight slowdown)
 - Users experience scale-down errors badly (connection failures)
 - Conservative scale-down = better user experience
@@ -692,6 +736,7 @@ behavior:
 ### 4. Combine Multiple Metrics Wisely
 
 **Good combination:**
+
 ```yaml
 metrics:
 - type: Resource
@@ -712,6 +757,7 @@ metrics:
 **Why:** CPU catches compute-bound load, RPS catches I/O-bound load.
 
 **Avoid:**
+
 ```yaml
 metrics:
 - type: Resource
@@ -731,6 +777,7 @@ metrics:
 ### 5. Start Conservative, Tune Over Time
 
 **Initial HPA:**
+
 ```yaml
 spec:
   minReplicas: 2
@@ -758,6 +805,7 @@ spec:
 ```
 
 **After monitoring:**
+
 - Increase scale-up aggressiveness if response time suffers
 - Decrease if you see thrashing
 - Adjust stabilization windows based on traffic patterns
@@ -812,6 +860,7 @@ kubectl describe hpa worker-service-hpa -n hello-apis
 ```
 
 Look for:
+
 - `ScalingReplicaSet` events
 - Warning messages about missing metrics
 - Failed scaling attempts
@@ -819,6 +868,7 @@ Look for:
 ### 10. Test Scaling Behavior
 
 **Load test script:**
+
 ```bash
 # Generate load
 kubectl run load-generator --image=busybox --restart=Never -- /bin/sh -c "while true; do wget -q -O- http://worker-service; done"
@@ -837,6 +887,7 @@ kubectl delete pod load-generator
 ### 1. Missing Resource Requests
 
 **Problem:**
+
 ```yaml
 containers:
 - name: app
@@ -844,7 +895,8 @@ containers:
 ```
 
 **Error:**
-```
+
+```text
 missing request for cpu
 ```
 
@@ -854,12 +906,14 @@ Always define CPU/memory requests for HPA to work.
 ### 2. Metrics Server Not Installed
 
 **Symptom:**
+
 ```bash
 kubectl top nodes
 error: Metrics API not available
 ```
 
 **Solution:**
+
 ```bash
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 ```
@@ -867,6 +921,7 @@ kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/late
 ### 3. Conflicting HPAs
 
 **Problem:**
+
 ```yaml
 # HPA 1
 scaleTargetRef:
@@ -884,6 +939,7 @@ scaleTargetRef:
 ### 4. Too Aggressive Scaling
 
 **Problem:**
+
 ```yaml
 behavior:
   scaleUp:
@@ -902,6 +958,7 @@ behavior:
 ### 5. Memory-Based Scaling
 
 **Problem:**
+
 ```yaml
 metrics:
 - type: Resource
@@ -917,6 +974,7 @@ metrics:
 **Result:** HPA scales up but never scales down.
 
 **Solution:**
+
 - Prefer CPU or custom metrics
 - If using memory, combine with CPU and set as secondary metric
 - Use very high utilization targets (85-90%)
@@ -927,12 +985,14 @@ metrics:
 **Problem:** Expecting instant scaling.
 
 **Reality:**
-```
+
+```text
 Load spike → HPA detects (15s) → Pod scheduled (5-30s) → Container starts (10-60s) → Ready (5-30s)
 Total: 35-135 seconds
 ```
 
 **Solution:**
+
 - Set `minReplicas` high enough for baseline load
 - Use aggressive scale-up policies
 - Consider pod priority classes for faster scheduling
@@ -941,6 +1001,7 @@ Total: 35-135 seconds
 ### 7. Wrong Target Type
 
 **Problem:**
+
 ```yaml
 metrics:
 - type: Resource
@@ -952,6 +1013,7 @@ metrics:
 ```
 
 **Solution:**
+
 - Use `Utilization` for percentages (1-100)
 - Use `AverageValue` for absolute values (e.g., `500m`)
 
@@ -962,6 +1024,7 @@ metrics:
 **Consequence:** Discovering scaling issues in production.
 
 **Solution:**
+
 ```bash
 # Load test with hey, wrk, or k6
 hey -z 5m -c 50 http://your-service
@@ -977,6 +1040,7 @@ watch kubectl get hpa,pods
 **Result:** Database overwhelmed, cascading failures.
 
 **Solution:**
+
 - Consider downstream capacity when setting `maxReplicas`
 - Implement connection pooling
 - Use circuit breakers
@@ -989,6 +1053,7 @@ watch kubectl get hpa,pods
 **Reality:** HPA calculates desired replicas for **each** metric and uses the **maximum**.
 
 **Example:**
+
 ```yaml
 metrics:
 - CPU: Suggests 3 replicas
@@ -1012,6 +1077,7 @@ worker-service-hpa    Deployment/worker-service   45%/70%   1         10        
 ```
 
 **Fields:**
+
 - `TARGETS`: Current / Target metric value
 - `REPLICAS`: Current replica count
 
@@ -1070,6 +1136,7 @@ kubectl logs -n kube-system kube-controller-manager-xxx | grep -i hpa
 **Meaning:** HPA cannot scale right now.
 
 **Reasons:**
+
 - `BackoffBoth`: Recently scaled, waiting for stabilization
 - `BackoffUpscale`: Recently scaled up, waiting
 - `BackoffDownscale`: Recently scaled down, waiting
@@ -1081,11 +1148,13 @@ kubectl logs -n kube-system kube-controller-manager-xxx | grep -i hpa
 **Meaning:** HPA cannot fetch metrics.
 
 **Reasons:**
+
 - `FailedGetResourceMetric`: Metrics Server unavailable
 - `InvalidSelector`: Selector doesn't match pods
 - `FailedGetPodsMetric`: Custom metrics unavailable
 
 **Action:**
+
 ```bash
 # Check metrics server
 kubectl get apiservice v1beta1.metrics.k8s.io -o yaml
@@ -1099,6 +1168,7 @@ kubectl get pods -n hello-apis -l app=worker-service
 **Meaning:** HPA wanted to scale but hit limits.
 
 **Reasons:**
+
 - `TooManyReplicas`: At `maxReplicas`
 - `TooFewReplicas`: At `minReplicas`
 
@@ -1107,6 +1177,7 @@ kubectl get pods -n hello-apis -l app=worker-service
 ### Debugging Checklist
 
 **HPA not scaling:**
+
 1. ✅ Metrics Server installed? `kubectl get deployment metrics-server -n kube-system`
 2. ✅ Metrics available? `kubectl top pods -n <namespace>`
 3. ✅ Resource requests defined? `kubectl get pod <pod-name> -o yaml | grep requests`
@@ -1115,12 +1186,14 @@ kubectl get pods -n hello-apis -l app=worker-service
 6. ✅ Any error events? `kubectl describe hpa`
 
 **HPA scaling too much:**
+
 1. Check stabilization windows
 2. Review scaling policies
 3. Verify metric targets are realistic
 4. Check for metric spikes in monitoring
 
 **HPA scaling too slow:**
+
 1. Increase scale-up aggressiveness
 2. Reduce stabilization windows
 3. Check pod startup time
@@ -1144,6 +1217,7 @@ rate(container_cpu_usage_seconds_total{pod=~"worker-service-.*"}[5m]) / on(pod) 
 ### Monitoring Best Practices
 
 **Key metrics to track:**
+
 1. Current vs desired replicas (scaling effectiveness)
 2. Scaling events per hour (stability)
 3. Time between scaling events (thrashing indicator)
@@ -1151,6 +1225,7 @@ rate(container_cpu_usage_seconds_total{pod=~"worker-service-.*"}[5m]) / on(pod) 
 5. Pod startup time (scale-up latency)
 
 **Alert examples:**
+
 ```yaml
 - alert: HPAMaxedOut
   expr: kube_horizontalpodautoscaler_status_current_replicas >= kube_horizontalpodautoscaler_spec_max_replicas
@@ -1172,6 +1247,7 @@ rate(container_cpu_usage_seconds_total{pod=~"worker-service-.*"}[5m]) / on(pod) 
 ### What is KEDA?
 
 **Kubernetes Event-Driven Autoscaling (KEDA)** extends HPA to support:
+
 - **Event-driven scaling:** React to queue depth, stream lag, etc.
 - **Scale to zero:** Reduce costs by scaling to 0 replicas when idle
 - **External metrics:** 50+ built-in scalers (SQS, Kafka, RabbitMQ, Azure Queue, etc.)
@@ -1179,7 +1255,7 @@ rate(container_cpu_usage_seconds_total{pod=~"worker-service-.*"}[5m]) / on(pod) 
 
 ### KEDA Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────┐
 │                   KEDA Operator                      │
 │  ┌──────────────────┐  ┌─────────────────────────┐ │
@@ -1217,7 +1293,8 @@ kubectl get pods -n keda
 ```
 
 **Expected output:**
-```
+
+```text
 NAME                                      READY   STATUS    RESTARTS   AGE
 keda-operator-5d8f8c7b6c-xxxxx            1/1     Running   0          1m
 keda-metrics-apiserver-6f8d9b8b7d-xxxxx   1/1     Running   0          1m
@@ -1230,7 +1307,8 @@ kubectl get apiservice | grep keda
 ```
 
 **Expected:**
-```
+
+```text
 v1beta1.external.metrics.k8s.io    keda/keda-metrics-apiserver   True        1m
 ```
 
@@ -1409,6 +1487,7 @@ kubectl get --raw /apis/external.metrics.k8s.io/v1beta1 | jq .
 ### When to Use KEDA
 
 **Use KEDA when:**
+
 - Need scale-to-zero (cost optimization)
 - Scaling based on message queues
 - External metrics from cloud services
@@ -1416,6 +1495,7 @@ kubectl get --raw /apis/external.metrics.k8s.io/v1beta1 | jq .
 - Multiple scaling triggers
 
 **Stick with HPA when:**
+
 - Simple CPU/memory scaling
 - Metrics Server sufficient
 - Don't need scale-to-zero
@@ -1501,6 +1581,7 @@ resources:
 ```
 
 **How to find right size:**
+
 ```bash
 # Monitor actual usage over time
 kubectl top pods -n hello-apis --sort-by=cpu
@@ -1512,22 +1593,27 @@ kubectl get vpa worker-service-vpa -o yaml
 ### 4. Tuning Target Utilization
 
 **Lower target = more headroom, less efficient:**
+
 ```yaml
 target:
   averageUtilization: 50    # 50% target = 2x overhead
 ```
+
 - Pros: Fast response, always have capacity
 - Cons: Higher cost, lower efficiency
 
 **Higher target = less headroom, more efficient:**
+
 ```yaml
 target:
   averageUtilization: 80    # 80% target = 1.25x overhead
 ```
+
 - Pros: Lower cost, higher efficiency
 - Cons: Slower response, closer to limits
 
 **Recommendation:**
+
 - **CPU:** 70-80% (CPU scales quickly)
 - **Memory:** 60-70% (memory scales slowly, need buffer)
 - **Custom metrics:** Depends on metric characteristics
@@ -1535,6 +1621,7 @@ target:
 ### 5. Optimize Scaling Policies
 
 **For bursty workloads:**
+
 ```yaml
 behavior:
   scaleUp:
@@ -1553,6 +1640,7 @@ behavior:
 ```
 
 **For steady workloads:**
+
 ```yaml
 behavior:
   scaleUp:
@@ -1586,6 +1674,7 @@ CMD ["/app"]
 ```
 
 **Techniques:**
+
 - Use slim base images
 - Pre-pull images on nodes
 - Optimize application initialization
@@ -1626,6 +1715,7 @@ data:
 ```
 
 **Best practice:** Coordinate HPA max with node capacity:
+
 - If node has 4 CPU cores, max pods per node ≈ 10-20 (depending on requests)
 - Set HPA `maxReplicas` considering node scale-up time
 
@@ -1667,11 +1757,13 @@ spec:
 HPA is reactive, but you can layer predictive scaling:
 
 **Options:**
+
 - **KEDA with cron triggers:** Scale up before known traffic patterns
 - **Custom controllers:** Use ML models to predict load
 - **Manual pre-scaling:** Scale up before known events
 
 **Example with KEDA:**
+
 ```yaml
 triggers:
 - type: cron
@@ -1701,6 +1793,7 @@ spec:
 ```
 
 **Best practices:**
+
 - Use `sessionAffinity: None` for even distribution
 - Consider connection pooling for databases
 - Use readiness probes to exclude pods not ready
@@ -1739,17 +1832,20 @@ spec:
 ## Additional Resources
 
 ### Official Documentation
+
 - [Kubernetes HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
 - [HPA Walkthrough](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/)
 - [KEDA Documentation](https://keda.sh/docs/)
 
 ### Tools
+
 - [Metrics Server](https://github.com/kubernetes-sigs/metrics-server)
 - [KEDA](https://keda.sh/)
 - [Vertical Pod Autoscaler](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler)
 - [Goldilocks (VPA recommendations)](https://github.com/FairwindsOps/goldilocks)
 
 ### Monitoring
+
 - [Prometheus Operator](https://prometheus-operator.dev/)
 - [Grafana Dashboards for HPA](https://grafana.com/grafana/dashboards/)
 - [kube-state-metrics](https://github.com/kubernetes/kube-state-metrics)
