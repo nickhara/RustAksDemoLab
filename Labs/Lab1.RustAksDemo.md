@@ -203,7 +203,7 @@ kubectl version --client
 ### API Information
 
 | API          | Technology | Framework                |
-|--------------|------------|--------------------------|
+| ------------ | ---------- | ------------------------ |
 | **Rust API** | Rust       | Actix-web                |
 | **C# API**   | .NET 10    | ASP.NET Core Minimal API |
 

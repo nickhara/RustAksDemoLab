@@ -71,7 +71,7 @@ kubectl get nodes
 ### Component Roles
 
 | Component | Technology | Port(s) | Purpose |
-|-----------|------------|---------|---------|
+| ----------- | ------------ | --------- | --------- |
 | **Rust API** | Rust (Actix-web) | 8080 | HTTP API with `/send` endpoint to publish messages |
 | **RabbitMQ** | RabbitMQ 3.x | 5672 (AMQP)<br>15672 (Management UI) | Message broker for task queuing |
 | **Worker Service** | C# (.NET 10) | N/A | Background service consuming and processing messages |
@@ -198,7 +198,7 @@ Messages published to RabbitMQ follow this JSON format:
 ```
 
 | Field | Type | Description |
-|-------|------|-------------|
+| ------- | ------ | ------------- |
 | `id` | string (UUID) | Unique message identifier |
 | `task_type` | string | Type of task to process |
 | `payload` | object | Task-specific data |
@@ -750,7 +750,7 @@ kubectl describe hpa worker-service-hpa -n hello-apis
 ### HPA Best Practices
 
 | Practice | Reason |
-|----------|--------|
+| ---------- | -------- |
 | Set appropriate min/max | Prevent over-provisioning and ensure availability |
 | Choose right metric target | Too low = frequent scaling, too high = poor performance |
 | Monitor cooldown periods | Understand why scaling isn't happening immediately |
@@ -784,7 +784,7 @@ Sends messages to the Rust API `/send` endpoint.
 **Parameters:**
 
 | Parameter | Description | Default |
-|-----------|-------------|---------|
+| ----------- | ------------- | --------- |
 | `-ApiUrl` | Base URL of Rust API | `http://localhost:8080` |
 | `-Count` | Number of messages to send | `10` |
 | `-DelayMs` | Delay between messages (ms) | `100` |
@@ -824,7 +824,7 @@ Monitors RabbitMQ queue status via Management API.
 **Parameters:**
 
 | Parameter | Description | Default |
-|-----------|-------------|---------|
+| ----------- | ------------- | --------- |
 | `-RabbitMqUrl` | RabbitMQ Management UI URL | `http://localhost:15672` |
 | `-Username` | RabbitMQ username | `admin` |
 | `-Password` | RabbitMQ password | `admin123` |
@@ -862,7 +862,7 @@ Monitors Horizontal Pod Autoscaler metrics and scaling events.
 **Parameters:**
 
 | Parameter | Description | Default |
-|-----------|-------------|---------|
+| ----------- | ------------- | --------- |
 | `-Namespace` | Kubernetes namespace | `hello-apis` |
 | `-HpaName` | HPA resource name | `worker-service-hpa` |
 | `-RefreshSeconds` | Refresh interval | `3` |
@@ -899,7 +899,7 @@ Retrieves processing statistics from worker logs.
 **Parameters:**
 
 | Parameter | Description | Default |
-|-----------|-------------|---------|
+| ----------- | ------------- | --------- |
 | `-Namespace` | Kubernetes namespace | `hello-apis` |
 | `-LabelSelector` | Pod label selector | `app=worker-service` |
 | `-TailLines` | Number of log lines to analyze | `100` |
@@ -940,7 +940,7 @@ Comprehensive end-to-end test of the entire system.
 **Parameters:**
 
 | Parameter | Description | Default |
-|-----------|-------------|---------|
+| ----------- | ------------- | --------- |
 | `-ApiUrl` | Rust API URL | `http://localhost:8080` |
 | `-MessageCount` | Number of test messages | `20` |
 | `-TimeoutSeconds` | Max wait time for completion | `180` |
@@ -1002,7 +1002,7 @@ Tests HPA auto-scaling behavior under load.
 **Parameters:**
 
 | Parameter | Description | Default |
-|-----------|-------------|---------|
+| ----------- | ------------- | --------- |
 | `-ApiUrl` | Rust API URL | Auto-detect from kubectl |
 | `-LoadDuration` | Load test duration (seconds) | `180` |
 | `-TargetRPS` | Target requests per second | `5` |
@@ -1158,7 +1158,7 @@ kubectl scale deployment worker-service --replicas=3 -n hello-apis
 **Common HPA issues:**
 
 | Issue | Cause | Solution |
-|-------|-------|----------|
+| ------- | ------- | ---------- |
 | `<unknown>` metrics | metrics-server not running | Install/restart metrics-server |
 | Not scaling up | No resource requests set | Add CPU/memory requests to deployment |
 | Scaling too slowly | Default cooldown period | Adjust HPA behavior annotations |
@@ -1254,7 +1254,7 @@ kubectl patch hpa worker-service-hpa -n hello-apis -p '{"spec":{"maxReplicas":15
 ### Debugging Commands Reference
 
 | Scenario | Command |
-|----------|---------|
+| ---------- | --------- |
 | Check all resources | `kubectl get all -n hello-apis` |
 | View recent events | `kubectl get events -n hello-apis --sort-by='.lastTimestamp' \| Select-Object -Last 20` |
 | Check pod resource usage | `kubectl top pods -n hello-apis` |
@@ -1403,7 +1403,7 @@ $env:RabbitMQ__QueueName="task-queue"
 ### Common Commands
 
 | Action | Command |
-|--------|---------|
+| -------- | --------- |
 | Start Docker Compose | `docker-compose up -d --build` |
 | View logs | `docker-compose logs -f` |
 | Stop services | `docker-compose down` |
@@ -1420,7 +1420,7 @@ $env:RabbitMQ__QueueName="task-queue"
 ### Key Endpoints
 
 | Endpoint | Method | Purpose | Example |
-|----------|--------|---------|---------|
+| ---------- | -------- | --------- | --------- |
 | `/` | GET | Hello World | `curl http://localhost:8080/` |
 | `/health` | GET | Health check | `curl http://localhost:8080/health` |
 | `/info` | GET | API information | `curl http://localhost:8080/info` |
@@ -1429,7 +1429,7 @@ $env:RabbitMQ__QueueName="task-queue"
 ### RabbitMQ Management UI URLs
 
 | Environment | URL | Credentials |
-|-------------|-----|-------------|
+| ------------- | ----- | ------------- |
 | Local (Docker Compose) | <http://localhost:15672> | admin / admin123 |
 | AKS (Port-Forward) | <http://localhost:15672> | admin / admin123 |
 
@@ -1527,7 +1527,7 @@ kubectl set image deployment/worker-service worker-service=$ACR_LOGIN_SERVER/wor
 ### Expected System Performance
 
 | Metric | Value |
-|--------|-------|
+| -------- | ------- |
 | Message processing time | ~2 seconds per message |
 | Worker throughput | 0.5 messages/second per worker |
 | HPA scale-up time | 30-60 seconds |

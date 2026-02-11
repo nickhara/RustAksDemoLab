@@ -66,7 +66,7 @@ based on observed metrics like CPU utilization, memory usage, or custom applicat
 ### Version Timeline
 
 | Version | Kubernetes | Status | Key Features |
-|---------|------------|--------|--------------|
+| --------- | ------------ | -------- | -------------- |
 | `autoscaling/v1` | 1.1+ | Stable | CPU-only scaling |
 | `autoscaling/v2beta1` | 1.8-1.11 | Deprecated | Multiple metrics, custom metrics |
 | `autoscaling/v2beta2` | 1.12-1.22 | Deprecated | Behavior configuration |
@@ -75,7 +75,7 @@ based on observed metrics like CPU utilization, memory usage, or custom applicat
 ### Feature Matrix
 
 | Feature | v1 | v2 |
-|---------|----|----|
+| --------- | ---- | ---- |
 | CPU Utilization | ✅ | ✅ |
 | Memory Utilization | ❌ | ✅ |
 | Custom Metrics | ❌ | ✅ |
@@ -1475,7 +1475,7 @@ kubectl get --raw /apis/external.metrics.k8s.io/v1beta1 | jq .
 ### KEDA vs Standard HPA
 
 | Feature | Standard HPA | KEDA |
-|---------|--------------|------|
+| --------- | -------------- | ------ |
 | Scale to zero | ❌ | ✅ |
 | CPU/Memory metrics | ✅ | ✅ |
 | External event sources | Limited | 50+ built-in |

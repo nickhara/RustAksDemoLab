@@ -5,6 +5,7 @@ This project provides hands-on labs to learn Rust, C#, Containers, Azure Kuberne
 ## Available Labs
 
 ### Lab 1: Hello World REST APIs (Prerequisite)
+
 Build and deploy basic REST APIs to AKS.
 
 - **Rust API** - Built with Actix-web framework
@@ -15,6 +16,7 @@ Build and deploy basic REST APIs to AKS.
 📖 **[View Lab 1 Guide](docs/LabExperimentGuide.md)**
 
 ### Lab 2: Message Queue with RabbitMQ and Auto-Scaling Workers
+
 Extend the Rust API with asynchronous message processing using RabbitMQ and auto-scaling worker services.
 
 - **Message Queue** - RabbitMQ for async task processing
@@ -405,6 +407,7 @@ The Rust API gains an additional endpoint in Lab 2:
 | `/send` | POST | Publishes a message to RabbitMQ queue |
 
 **Example Request:**
+
 ```json
 {
   "task_type": "process-data",
@@ -417,6 +420,7 @@ The Rust API gains an additional endpoint in Lab 2:
 ## Learning Objectives
 
 ### Lab 1
+
 - Build REST APIs in Rust and C#
 - Containerize applications with Docker
 - Deploy to Azure Kubernetes Service
@@ -424,6 +428,7 @@ The Rust API gains an additional endpoint in Lab 2:
 - Configure Kubernetes resources
 
 ### Lab 2
+
 - Implement asynchronous message processing
 - Use RabbitMQ for message queuing
 - Build background worker services
