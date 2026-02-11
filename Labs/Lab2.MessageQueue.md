@@ -1,6 +1,8 @@
 # Lab 2: Message Queue Processing with RabbitMQ and Horizontal Pod Autoscaling
 
-Building upon the foundational knowledge from Lab 1, this lab introduces asynchronous message processing with RabbitMQ, demonstrating how to implement a distributed task queue system with automatic scaling capabilities. The system consists of:
+Building upon the foundational knowledge from Lab 1, this lab introduces asynchronous message processing with RabbitMQ,
+demonstrating how to implement a distributed task queue system with automatic scaling capabilities.
+The system consists of:
 
 - **Rust API** - Enhanced with `/send` endpoint to publish messages to RabbitMQ
 - **RabbitMQ** - Message broker for reliable task queuing

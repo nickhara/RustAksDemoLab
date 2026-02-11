@@ -1,6 +1,8 @@
 # Lab Experiment Guide: Rust and Azure Kubernetes Service
 
-The intention of this demo is to provide an environment to learn and interact with Rust, and C#, Containers, and Azure Kubernetes. This project implements two basic REST APIs, and includes the deployment configuration files to provision and deploy the services to an AKS cluster:
+The intention of this demo is to provide an environment to learn and interact with Rust, and C#, Containers, and Azure
+Kubernetes. This project implements two basic REST APIs, and includes the deployment configuration files to provision and
+deploy the services to an AKS cluster:
 
 - **Rust API** - Built with Actix-web framework
 - **C# API** - Built with ASP.NET Core Minimal API
@@ -193,7 +195,8 @@ sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 kubectl version --client
 ```
 
-> **Tip:** If you have Docker Desktop installed, kubectl is included. Enable it in Docker Desktop > Settings > Kubernetes > Enable Kubernetes.
+> **Tip:** If you have Docker Desktop installed, kubectl is included. Enable it in Docker Desktop > Settings >
+> Kubernetes > Enable Kubernetes.
 
 ## High Level Architecture
 

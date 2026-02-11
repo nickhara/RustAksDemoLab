@@ -2,7 +2,8 @@
 
 ## Overview
 
-This document captures the complete planning and implementation process for **Lab 2: Message Queue with RabbitMQ and Auto-Scaling Workers** - an extension of the RustAksDemoLab project that adds asynchronous message processing capabilities.
+This document captures the complete planning and implementation process for **Lab 2: Message Queue with RabbitMQ and
+Auto-Scaling Workers** - an extension of the RustAksDemoLab project that adds asynchronous message processing capabilities.
 
 **Date Created**: February 7, 2026  
 **Implementation Status**: ✅ Complete
@@ -26,32 +27,32 @@ The goal was to extend the existing Lab 1 (basic REST APIs) with:
 
 ### Architecture Decisions
 
-**1. Message Queue Technology: RabbitMQ**
+#### 1. Message Queue Technology: RabbitMQ
 
 - **Why**: Industry standard, well-documented, easy to deploy
 - **Alternatives considered**: Azure Service Bus (more complex), Redis (less robust)
 - **Decision**: RabbitMQ provides good learning foundation and works locally
 
-**2. Worker Service Language: C#**
+#### 2. Worker Service Language: C# {#worker-service-language}
 
 - **Why**: User requested C# to complement the Rust API
 - **Benefit**: Demonstrates polyglot microservices architecture
 - **Technology**: .NET 9.0 Worker Service template
 
-**3. Message Format: JSON**
+#### 3. Message Format: JSON
 
 - **Structure**: `{ id, task_type, payload, timestamp }`
 - **Why**: Human-readable, easy to debug, flexible payload
 - **Serialization**: serde_json (Rust), System.Text.Json (C#)
 
-**4. Scaling Strategy: CPU-based HPA**
+#### 4. Scaling Strategy: CPU-based HPA
 
 - **Primary**: CPU utilization (70% target)
 - **Why**: Works out-of-box, no additional setup required
 - **Advanced option**: KEDA for queue-depth scaling (documented but optional)
 - **Range**: 1-10 replicas
 
-**5. Processing Simulation: Fixed Delay**
+#### 5. Processing Simulation: Fixed Delay
 
 - **Duration**: 2000ms (2 seconds) per message
 - **Why**: Predictable load for testing, generates CPU usage for HPA
@@ -879,7 +880,8 @@ This implementation successfully created a production-ready foundation for learn
 - Operational excellence (monitoring, testing, automation)
 - Infrastructure as Code (Docker Compose, K8s manifests)
 
-The comprehensive documentation (1800+ lines) and tooling (10 scripts) make this an excellent educational resource that builds naturally on Lab 1's foundation.
+The comprehensive documentation (1800+ lines) and tooling (10 scripts) make this an excellent educational resource that
+builds naturally on Lab 1's foundation.
 
 **Total Lines of Code/Config**: ~5000
 **Total Documentation**: ~1800 lines

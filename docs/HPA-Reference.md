@@ -20,7 +20,8 @@
 
 ### Overview
 
-Horizontal Pod Autoscaler (HPA) automatically scales the number of pods in a deployment, replica set, or stateful set based on observed metrics like CPU utilization, memory usage, or custom application metrics.
+Horizontal Pod Autoscaler (HPA) automatically scales the number of pods in a deployment, replica set, or stateful set
+based on observed metrics like CPU utilization, memory usage, or custom application metrics.
 
 ### Architecture
 
@@ -400,7 +401,7 @@ Scaling behaviors control **how** and **when** scaling occurs, not just the targ
 
 ### Scale-Up Configuration
 
-#### Stabilization Window
+#### Scale-Up Stabilization Window
 
 ```yaml
 scaleUp:
@@ -411,7 +412,7 @@ scaleUp:
 - `60`: Wait 60s and only scale if metrics stay high (conservative)
 - Use case for non-zero: Avoid scaling for brief spikes
 
-#### Policies
+#### Scale-Up Policies
 
 **Percentage-based:**
 
@@ -461,7 +462,7 @@ selectPolicy: Disabled  # Disable scale-up entirely
 
 ### Scale-Down Configuration
 
-#### Stabilization Window
+#### Scale-Down Stabilization Window
 
 ```yaml
 scaleDown:
@@ -483,7 +484,7 @@ Time    CPU%    Action
 5:01    50%     Now can scale down (window passed)
 ```
 
-#### Policies
+#### Scale-Down Policies
 
 Conservative scale-down:
 
