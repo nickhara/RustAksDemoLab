@@ -347,6 +347,34 @@ foreach ($envVar in $envVars.GetEnumerator()) {
     }
 }
 
+# Runtime API Health Checks (optional - may not be running)
+Write-Header "Runtime API Health Checks"
+Write-Host "Note: These checks test running services - it's normal if they're not started yet." -ForegroundColor Gray
+
+# Test Rust API if running
+try {
+    $health = Invoke-RestMethod -Uri "http://localhost:8080/health" -Method Get -TimeoutSec 3
+    if ($health.status -eq "healthy") {
+        Write-Success "Rust API: Health endpoint responsive on port 8080"
+    } else {
+        Write-Warning "Rust API: Health endpoint returned unexpected status: $($health.status)"
+    }
+} catch {
+    Write-Warning "Rust API: Not running or not accessible on port 8080 (start with VS Code task or 'cd src/rust-api && cargo run')"
+}
+
+# Test C# API if running
+try {
+    $health = Invoke-RestMethod -Uri "http://localhost:5000/health" -Method Get -TimeoutSec 3
+    if ($health.status -eq "Healthy") {
+        Write-Success "C# API: Health endpoint responsive on port 5000"
+    } else {
+        Write-Warning "C# API: Health endpoint returned unexpected status: $($health.status)"
+    }
+} catch {
+    Write-Warning "C# API: Not running or not accessible on port 5000 (start with VS Code task or 'cd src/csharp-api && dotnet run')"
+}
+
 # Final Summary
 Write-Header "Validation Summary"
 

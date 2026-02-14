@@ -1,0 +1,96 @@
+version: "3.8"
+
+# Complete containerized setup - all services running in Docker
+# For infrastructure-only setup, use: docker-compose up
+# For this full setup, use: docker-compose -f docker-compose.full.yml up
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672" # AMQP port
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  rust-api:
+    build:
+      context: ./src/rust-api
+      dockerfile: Dockerfile
+    image: hello-rust-api:latest
+    container_name: rust-api
+    ports:
+      - "8080:8080"
+    environment:
+      - RUST_LOG=debug
+      - PORT=8080
+      - RABBITMQ_URL=amqp://admin:admin123@rabbitmq:5672
+      - RABBITMQ_QUEUE=task-queue
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  csharp-api:
+    build:
+      context: ./src/csharp-api
+      dockerfile: Dockerfile
+    image: hello-csharp-api:latest
+    container_name: csharp-api
+    ports:
+      - "5000:8080" # Map to port 5000 to avoid conflict with Rust API
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=admin
+      - RabbitMQ__Password=admin123
+      - RabbitMQ__Queue=task-queue
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  worker-service:
+    build:
+      context: ./src/worker-service/WorkerService
+      dockerfile: Dockerfile
+    image: worker-service:latest
+    container_name: worker-service
+    environment:
+      - RabbitMQ__Host=rabbitmq
+      - RabbitMQ__Port=5672
+      - RabbitMQ__Username=admin
+      - RabbitMQ__Password=admin123
+      - RabbitMQ__Queue=task-queue
+      - ProcessingDelayMs=2000
+      - DOTNET_ENVIRONMENT=Development
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  rabbitmq_data:
+    driver: local

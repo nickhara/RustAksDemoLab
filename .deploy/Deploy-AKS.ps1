@@ -3,7 +3,7 @@
     Deploys the message queue system to Azure Kubernetes Service.
 
 .DESCRIPTION
-    Deploys RabbitMQ, Rust API, and Worker Service with HPA to AKS.
+    Deploys RabbitMQ, Rust API, C# API, and Worker Service with HPA to AKS.
     Requires kubectl to be configured with AKS credentials.
 
 .PARAMETER Namespace
@@ -31,7 +31,7 @@ param(
     [Parameter()]
     [string]$Namespace = "hello-apis",
     
-    [Parameter(Mandatory=$true)]
+    [Parameter(Mandatory = $true)]
     [string]$AcrName,
     
     [Parameter()]
@@ -56,7 +56,8 @@ Write-Host "Verifying Kubernetes connectivity..." -ForegroundColor Yellow
 try {
     kubectl cluster-info | Out-Null
     Write-Host "✓ Connected to Kubernetes cluster" -ForegroundColor Green
-} catch {
+}
+catch {
     Write-Host "✗ Failed to connect to Kubernetes cluster" -ForegroundColor Red
     Write-Host "Please run: az aks get-credentials --resource-group <rg-name> --name <cluster-name>" -ForegroundColor Yellow
     exit 1
@@ -91,28 +92,37 @@ Write-Host ""
 
 # Deploy RabbitMQ
 if (-not $SkipRabbitMQ) {
-    Write-Host "[1/4] Deploying RabbitMQ..." -ForegroundColor Yellow
+    Write-Host "[1/5] Deploying RabbitMQ..." -ForegroundColor Yellow
     kubectl apply -f "$tempDir\rabbitmq-deployment.yaml"
     
     Write-Host "  Waiting for RabbitMQ to be ready..." -ForegroundColor Gray
     kubectl wait --for=condition=ready pod -l app=rabbitmq -n $Namespace --timeout=180s
     Write-Host "✓ RabbitMQ deployed" -ForegroundColor Green
     Write-Host ""
-} else {
-    Write-Host "[1/4] Skipping RabbitMQ deployment" -ForegroundColor Gray
+}
+else {
+    Write-Host "[1/5] Skipping RabbitMQ deployment" -ForegroundColor Gray
     Write-Host ""
 }
 
 # Deploy Rust API
-Write-Host "[2/4] Deploying Rust API..." -ForegroundColor Yellow
+Write-Host "[2/5] Deploying Rust API..." -ForegroundColor Yellow
 kubectl apply -f "$tempDir\rust-deployment.yaml"
 Write-Host "  Waiting for Rust API to be ready..." -ForegroundColor Gray
 kubectl wait --for=condition=available deployment/rust-hello-api -n $Namespace --timeout=180s
 Write-Host "✓ Rust API deployed" -ForegroundColor Green
 Write-Host ""
 
+# Deploy C# API
+Write-Host "[3/5] Deploying C# API..." -ForegroundColor Yellow
+kubectl apply -f "$tempDir\csharp-deployment.yaml"
+Write-Host "  Waiting for C# API to be ready..." -ForegroundColor Gray
+kubectl wait --for=condition=available deployment/csharp-hello-api -n $Namespace --timeout=180s
+Write-Host "✓ C# API deployed" -ForegroundColor Green
+Write-Host ""
+
 # Deploy Worker Service
-Write-Host "[3/4] Deploying Worker Service..." -ForegroundColor Yellow
+Write-Host "[4/5] Deploying Worker Service..." -ForegroundColor Yellow
 kubectl apply -f "$tempDir\worker-deployment.yaml"
 Write-Host "  Waiting for Worker Service to be ready..." -ForegroundColor Gray
 kubectl wait --for=condition=available deployment/worker-service -n $Namespace --timeout=180s
@@ -120,7 +130,7 @@ Write-Host "✓ Worker Service deployed" -ForegroundColor Green
 Write-Host ""
 
 # Deploy HPA
-Write-Host "[4/4] Deploying HPA..." -ForegroundColor Yellow
+Write-Host "[5/5] Deploying HPA..." -ForegroundColor Yellow
 kubectl apply -f "$tempDir\worker-hpa.yaml"
 Write-Host "✓ HPA deployed" -ForegroundColor Green
 Write-Host ""
@@ -156,15 +166,29 @@ Write-Host "Waiting for external IPs to be assigned..." -ForegroundColor Yellow
 Start-Sleep -Seconds 10
 
 $rustIp = kubectl get svc rust-hello-api -n $Namespace -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>$null
+$csharpIp = kubectl get svc csharp-hello-api -n $Namespace -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>$null
 $rabbitmqIp = kubectl get svc rabbitmq-management -n $Namespace -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>$null
 
 if ($rustIp) {
     Write-Host "Rust API:              http://$rustIp" -ForegroundColor White
-    Write-Host "  Test: curl http://$rustIp/" -ForegroundColor Gray
+    Write-Host "  Test: curl http://$rustIp/health" -ForegroundColor Gray
     Write-Host "  Send: Invoke-RestMethod -Uri http://$rustIp/send -Method Post -Body '{...}'" -ForegroundColor Gray
-} else {
+}
+else {
     Write-Host "Rust API:              <pending external IP>" -ForegroundColor Yellow
     Write-Host "  Check with: kubectl get svc rust-hello-api -n $Namespace" -ForegroundColor Gray
+}
+
+Write-Host ""
+
+if ($csharpIp) {
+    Write-Host "C# API:                http://$csharpIp" -ForegroundColor White
+    Write-Host "  Test: curl http://$csharpIp/health" -ForegroundColor Gray
+    Write-Host "  Send: Invoke-RestMethod -Uri http://$csharpIp/send -Method Post -Body '{...}'" -ForegroundColor Gray
+}
+else {
+    Write-Host "C# API:                <pending external IP>" -ForegroundColor Yellow
+    Write-Host "  Check with: kubectl get svc csharp-hello-api -n $Namespace" -ForegroundColor Gray
 }
 
 Write-Host ""
@@ -173,7 +197,8 @@ if ($rabbitmqIp) {
     Write-Host "RabbitMQ Management:   http://$rabbitmqIp" -ForegroundColor White
     Write-Host "  Username: admin" -ForegroundColor Gray
     Write-Host "  Password: admin123" -ForegroundColor Gray
-} else {
+}
+else {
     Write-Host "RabbitMQ Management:   <pending external IP>" -ForegroundColor Yellow
     Write-Host "  Check with: kubectl get svc rabbitmq-management -n $Namespace" -ForegroundColor Gray
 }
@@ -189,11 +214,15 @@ Write-Host ""
 Write-Host "Watch HPA scaling:" -ForegroundColor Yellow
 Write-Host "  .\.deploy\Watch-HPA.ps1 -Namespace $Namespace" -ForegroundColor Gray
 Write-Host ""
-Write-Host "Send test messages (once external IP is available):" -ForegroundColor Yellow
+Write-Host "Send test messages (once external IPs are available):" -ForegroundColor Yellow
+Write-Host "  # Test Rust API:" -ForegroundColor Gray
 Write-Host "  .\.test\Send-TestMessages.ps1 -Endpoint http://$rustIp -Count 50" -ForegroundColor Gray
+Write-Host "  # Test C# API:" -ForegroundColor Gray
+Write-Host "  .\.test\Send-TestMessages.ps1 -Endpoint http://$csharpIp -Count 50" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Run end-to-end test:" -ForegroundColor Yellow
 Write-Host "  .\.test\Test-E2E.ps1 -ApiEndpoint http://$rustIp -RabbitMqManagement http://$rabbitmqIp" -ForegroundColor Gray
+Write-Host "  .\.test\Test-E2E.ps1 -ApiEndpoint http://$csharpIp -RabbitMqManagement http://$rabbitmqIp" -ForegroundColor Gray
 Write-Host ""
 
 Write-Host "✓ Deployment complete!" -ForegroundColor Green

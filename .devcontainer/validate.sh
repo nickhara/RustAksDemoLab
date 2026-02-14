@@ -327,6 +327,36 @@ for port in "${ports[@]}"; do
     fi
 done
 
+# 8. Runtime API Health Checks (optional - may not be running)
+print_header "Runtime API Health Checks"
+echo -e "${GRAY}Note: These checks test running services - it's normal if they're not started yet.${NC}"
+
+# Test Rust API if running
+if curl -f -s --max-time 3 http://localhost:8080/health >/dev/null 2>&1; then
+    # Get actual health response
+    health_response=$(curl -s --max-time 3 http://localhost:8080/health)
+    if echo "$health_response" | grep -q '"status":"healthy"'; then
+        print_success "Rust API: Health endpoint responsive on port 8080"
+    else
+        print_warning "Rust API: Health endpoint returned unexpected response"
+    fi
+else
+    print_warning "Rust API: Not running or not accessible on port 8080 (start with VS Code task or 'cd src/rust-api && cargo run')"
+fi
+
+# Test C# API if running
+if curl -f -s --max-time 3 http://localhost:5000/health >/dev/null 2>&1; then
+    # Get actual health response
+    health_response=$(curl -s --max-time 3 http://localhost:5000/health)
+    if echo "$health_response" | grep -q '"status":"Healthy"'; then
+        print_success "C# API: Health endpoint responsive on port 5000"
+    else
+        print_warning "C# API: Health endpoint returned unexpected response"
+    fi
+else
+    print_warning "C# API: Not running or not accessible on port 5000 (start with VS Code task or 'cd src/csharp-api && dotnet run')"
+fi
+
 # Final Summary
 print_header "Validation Summary"
 

@@ -1,14 +1,15 @@
-version: '3.8'
+version: "3.8"
 
-# Simplified dev container setup - only infrastructure services
-# Application services (Rust API, C# Worker) run directly in dev container
+# Infrastructure-only setup for dev container workflow
+# Applications run directly in dev container for faster development iteration
+# For full containerized setup, use: docker-compose -f docker-compose.full.yml up
 
 services:
   rabbitmq:
     image: rabbitmq:3.13-management
     container_name: rabbitmq
     ports:
-      - "5672:5672"   # AMQP port
+      - "5672:5672" # AMQP port
       - "15672:15672" # Management UI
     environment:
       RABBITMQ_DEFAULT_USER: admin
