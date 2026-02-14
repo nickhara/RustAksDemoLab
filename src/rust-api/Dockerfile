@@ -25,7 +25,7 @@ RUN touch src/main.rs && cargo build --release
 FROM alpine:3.19
 
 # Install runtime dependencies
-RUN apk add --no-cache ca-certificates
+RUN apk add --no-cache ca-certificates wget
 
 # Create non-root user for security
 RUN addgroup -g 1000 appgroup && \
