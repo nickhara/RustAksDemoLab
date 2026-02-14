@@ -3,7 +3,7 @@
     Deploys the message queue system locally using Docker Compose.
 
 .DESCRIPTION
-    Starts RabbitMQ, Rust API, and Worker Service using Docker Compose.
+    Starts RabbitMQ, Rust API, C# API, and Worker Service using Docker Compose.
     Builds images if they don't exist.
 
 .PARAMETER Build
@@ -77,6 +77,7 @@ try {
     Write-Host "  Access URLs" -ForegroundColor Cyan
     Write-Host "========================================" -ForegroundColor Cyan
     Write-Host "Rust API:              http://localhost:8080" -ForegroundColor White
+    Write-Host "C# API:                http://localhost:8081" -ForegroundColor White
     Write-Host "RabbitMQ Management:   http://localhost:15672" -ForegroundColor White
     Write-Host "  Username: admin" -ForegroundColor Gray
     Write-Host "  Password: admin123" -ForegroundColor Gray
@@ -89,7 +90,14 @@ try {
         $health = Invoke-RestMethod -Uri "http://localhost:8080/health" -Method Get -TimeoutSec 5
         Write-Host "✓ Rust API is healthy: $($health.status)" -ForegroundColor Green
     } catch {
-        Write-Host "⚠ Could not verify API health (may still be starting): $_" -ForegroundColor Yellow
+        Write-Host "⚠ Could not verify Rust API health (may still be starting): $_" -ForegroundColor Yellow
+    }
+    
+    try {
+        $health = Invoke-RestMethod -Uri "http://localhost:8081/health" -Method Get -TimeoutSec 5
+        Write-Host "✓ C# API is healthy: $($health.status)" -ForegroundColor Green
+    } catch {
+        Write-Host "⚠ Could not verify C# API health (may still be starting): $_" -ForegroundColor Yellow
     }
     
     Write-Host ""
@@ -105,6 +113,7 @@ try {
     Write-Host ""
     Write-Host "View logs:" -ForegroundColor Yellow
     Write-Host "  docker-compose logs -f rust-api" -ForegroundColor Gray
+    Write-Host "  docker-compose logs -f csharp-api" -ForegroundColor Gray
     Write-Host "  docker-compose logs -f worker-service" -ForegroundColor Gray
     Write-Host ""
     Write-Host "Stop services:" -ForegroundColor Yellow

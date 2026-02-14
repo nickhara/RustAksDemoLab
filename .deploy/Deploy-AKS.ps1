@@ -3,7 +3,7 @@
     Deploys the message queue system to Azure Kubernetes Service.
 
 .DESCRIPTION
-    Deploys RabbitMQ, Rust API, and Worker Service with HPA to AKS.
+    Deploys RabbitMQ, Rust API, C# API, and Worker Service with HPA to AKS.
     Requires kubectl to be configured with AKS credentials.
 
 .PARAMETER Namespace
@@ -91,7 +91,7 @@ Write-Host ""
 
 # Deploy RabbitMQ
 if (-not $SkipRabbitMQ) {
-    Write-Host "[1/4] Deploying RabbitMQ..." -ForegroundColor Yellow
+    Write-Host "[1/5] Deploying RabbitMQ..." -ForegroundColor Yellow
     kubectl apply -f "$tempDir\rabbitmq-deployment.yaml"
     
     Write-Host "  Waiting for RabbitMQ to be ready..." -ForegroundColor Gray
@@ -99,20 +99,28 @@ if (-not $SkipRabbitMQ) {
     Write-Host "✓ RabbitMQ deployed" -ForegroundColor Green
     Write-Host ""
 } else {
-    Write-Host "[1/4] Skipping RabbitMQ deployment" -ForegroundColor Gray
+    Write-Host "[1/5] Skipping RabbitMQ deployment" -ForegroundColor Gray
     Write-Host ""
 }
 
 # Deploy Rust API
-Write-Host "[2/4] Deploying Rust API..." -ForegroundColor Yellow
+Write-Host "[2/5] Deploying Rust API..." -ForegroundColor Yellow
 kubectl apply -f "$tempDir\rust-deployment.yaml"
 Write-Host "  Waiting for Rust API to be ready..." -ForegroundColor Gray
 kubectl wait --for=condition=available deployment/rust-hello-api -n $Namespace --timeout=180s
 Write-Host "✓ Rust API deployed" -ForegroundColor Green
 Write-Host ""
 
+# Deploy C# API
+Write-Host "[3/5] Deploying C# API..." -ForegroundColor Yellow
+kubectl apply -f "$tempDir\csharp-deployment.yaml"
+Write-Host "  Waiting for C# API to be ready..." -ForegroundColor Gray
+kubectl wait --for=condition=available deployment/csharp-hello-api -n $Namespace --timeout=180s
+Write-Host "✓ C# API deployed" -ForegroundColor Green
+Write-Host ""
+
 # Deploy Worker Service
-Write-Host "[3/4] Deploying Worker Service..." -ForegroundColor Yellow
+Write-Host "[4/5] Deploying Worker Service..." -ForegroundColor Yellow
 kubectl apply -f "$tempDir\worker-deployment.yaml"
 Write-Host "  Waiting for Worker Service to be ready..." -ForegroundColor Gray
 kubectl wait --for=condition=available deployment/worker-service -n $Namespace --timeout=180s
@@ -120,7 +128,7 @@ Write-Host "✓ Worker Service deployed" -ForegroundColor Green
 Write-Host ""
 
 # Deploy HPA
-Write-Host "[4/4] Deploying HPA..." -ForegroundColor Yellow
+Write-Host "[5/5] Deploying HPA..." -ForegroundColor Yellow
 kubectl apply -f "$tempDir\worker-hpa.yaml"
 Write-Host "✓ HPA deployed" -ForegroundColor Green
 Write-Host ""
@@ -156,6 +164,7 @@ Write-Host "Waiting for external IPs to be assigned..." -ForegroundColor Yellow
 Start-Sleep -Seconds 10
 
 $rustIp = kubectl get svc rust-hello-api -n $Namespace -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>$null
+$csharpIp = kubectl get svc csharp-hello-api -n $Namespace -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>$null
 $rabbitmqIp = kubectl get svc rabbitmq-management -n $Namespace -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>$null
 
 if ($rustIp) {
@@ -165,6 +174,16 @@ if ($rustIp) {
 } else {
     Write-Host "Rust API:              <pending external IP>" -ForegroundColor Yellow
     Write-Host "  Check with: kubectl get svc rust-hello-api -n $Namespace" -ForegroundColor Gray
+}
+
+Write-Host ""
+
+if ($csharpIp) {
+    Write-Host "C# API:                http://$csharpIp" -ForegroundColor White
+    Write-Host "  Test: curl http://$csharpIp/" -ForegroundColor Gray
+} else {
+    Write-Host "C# API:                <pending external IP>" -ForegroundColor Yellow
+    Write-Host "  Check with: kubectl get svc csharp-hello-api -n $Namespace" -ForegroundColor Gray
 }
 
 Write-Host ""

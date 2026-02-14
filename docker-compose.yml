@@ -1,7 +1,7 @@
 version: '3.8'
 
-# Simplified dev container setup - only infrastructure services
-# Application services (Rust API, C# Worker) run directly in dev container
+# Local deployment setup with all services
+# For dev container infrastructure only, see .devcontainer/docker-compose.yml
 
 services:
   rabbitmq:
@@ -21,6 +21,76 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    networks:
+      - hello-apis
+
+  rust-api:
+    build:
+      context: ./src/rust-api
+      dockerfile: Dockerfile
+    container_name: rust-api
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: admin
+      RABBITMQ_PASS: admin123
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - hello-apis
+
+  csharp-api:
+    build:
+      context: ./src/csharp-api
+      dockerfile: Dockerfile
+    container_name: csharp-api
+    ports:
+      - "8081:8080"
+    environment:
+      PORT: "8080"
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://+:8080"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - hello-apis
+
+  worker-service:
+    build:
+      context: ./src/worker-service/WorkerService
+      dockerfile: Dockerfile
+    container_name: worker-service
+    environment:
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__Username: admin
+      RabbitMQ__Password: admin123
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - hello-apis
+
+networks:
+  hello-apis:
+    driver: bridge
 
 volumes:
   rabbitmq_data:

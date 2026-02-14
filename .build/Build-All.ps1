@@ -3,7 +3,7 @@
     Builds all Docker images for the message queue lab.
 
 .DESCRIPTION
-    Builds Docker images for Rust API and C# Worker Service.
+    Builds Docker images for Rust API, C# API, and C# Worker Service.
     Optionally tags and pushes to Azure Container Registry.
 
 .PARAMETER AcrName
@@ -45,7 +45,7 @@ Write-Host ""
 $rootDir = Split-Path -Parent $PSScriptRoot
 
 # Build Rust API
-Write-Host "[1/2] Building Rust API..." -ForegroundColor Yellow
+Write-Host "[1/3] Building Rust API..." -ForegroundColor Yellow
 Push-Location "$rootDir\src\rust-api"
 try {
     docker build -t hello-rust-api:$Version .
@@ -63,8 +63,27 @@ try {
 Pop-Location
 Write-Host ""
 
+# Build C# API
+Write-Host "[2/3] Building C# API..." -ForegroundColor Yellow
+Push-Location "$rootDir\src\csharp-api"
+try {
+    docker build -t hello-csharp-api:$Version .
+    Write-Host "✓ C# API built successfully" -ForegroundColor Green
+    
+    if ($PushToAcr -and $AcrName) {
+        Write-Host "  Tagging for ACR..." -ForegroundColor Gray
+        docker tag hello-csharp-api:$Version "$AcrName.azurecr.io/hello-csharp-api:$Version"
+    }
+} catch {
+    Write-Host "✗ Failed to build C# API: $_" -ForegroundColor Red
+    Pop-Location
+    exit 1
+}
+Pop-Location
+Write-Host ""
+
 # Build Worker Service
-Write-Host "[2/2] Building Worker Service..." -ForegroundColor Yellow
+Write-Host "[3/3] Building Worker Service..." -ForegroundColor Yellow
 Push-Location "$rootDir\src\worker-service\WorkerService"
 try {
     docker build -t worker-service:$Version .
@@ -98,6 +117,11 @@ if ($PushToAcr -and $AcrName) {
     Write-Host "✓ Rust API pushed" -ForegroundColor Green
     
     Write-Host ""
+    Write-Host "Pushing C# API..." -ForegroundColor Yellow
+    docker push "$AcrName.azurecr.io/hello-csharp-api:$Version"
+    Write-Host "✓ C# API pushed" -ForegroundColor Green
+    
+    Write-Host ""
     Write-Host "Pushing Worker Service..." -ForegroundColor Yellow
     docker push "$AcrName.azurecr.io/worker-service:$Version"
     Write-Host "✓ Worker Service pushed" -ForegroundColor Green
@@ -114,7 +138,7 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # List local images
-docker images | Select-String -Pattern "hello-rust-api|worker-service" | ForEach-Object { Write-Host $_ -ForegroundColor White }
+docker images | Select-String -Pattern "hello-rust-api|hello-csharp-api|worker-service" | ForEach-Object { Write-Host $_ -ForegroundColor White }
 Write-Host ""
 
 if ($PushToAcr -and $AcrName) {
