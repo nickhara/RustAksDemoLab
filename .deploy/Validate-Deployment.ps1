@@ -83,7 +83,7 @@ Write-Host "[2/6] Checking C# API..." -ForegroundColor Yellow
 try {
     $health = Invoke-RestMethod -Uri "$CsharpApiUrl/health" -Method Get -TimeoutSec 5
     
-    if ($health.status -eq "Healthy") {
+    if ($health.status -eq "healthy") {
         Write-Host "✓ C# API is healthy" -ForegroundColor Green
         $checks += @{ Name = "C# API Health"; Status = "PASS" }
     }
