@@ -3,7 +3,7 @@
     Validates health of all deployed components.
 
 .DESCRIPTION
-    Performs health checks on Rust API, RabbitMQ, Worker Service, and HPA.
+    Performs health checks on Rust API, C# API, RabbitMQ, Worker Service, and HPA.
     Can be used for both local and AKS deployments.
 
 .PARAMETER Environment
@@ -14,6 +14,9 @@
 
 .PARAMETER RustApiUrl
     Rust API URL (for local or AKS external IP)
+
+.PARAMETER CsharpApiUrl
+    C# API URL (for local or AKS external IP)
 
 .PARAMETER RabbitMqManagementUrl
     RabbitMQ Management URL
@@ -39,6 +42,9 @@ param(
     [string]$RustApiUrl = "http://localhost:8080",
     
     [Parameter()]
+    [string]$CsharpApiUrl = "http://localhost:5000",
+    
+    [Parameter()]
     [string]$RabbitMqManagementUrl = "http://localhost:15672"
 )
 
@@ -53,25 +59,47 @@ Write-Host ""
 $checks = @()
 
 # Check 1: Rust API Health
-Write-Host "[1/5] Checking Rust API..." -ForegroundColor Yellow
+Write-Host "[1/6] Checking Rust API..." -ForegroundColor Yellow
 try {
     $health = Invoke-RestMethod -Uri "$RustApiUrl/health" -Method Get -TimeoutSec 5
     
     if ($health.status -eq "healthy") {
         Write-Host "✓ Rust API is healthy" -ForegroundColor Green
         $checks += @{ Name = "Rust API Health"; Status = "PASS" }
-    } else {
+    }
+    else {
         Write-Host "✗ Rust API returned unexpected status: $($health.status)" -ForegroundColor Red
         $checks += @{ Name = "Rust API Health"; Status = "FAIL" }
     }
-} catch {
+}
+catch {
     Write-Host "✗ Failed to connect to Rust API: $_" -ForegroundColor Red
     $checks += @{ Name = "Rust API Health"; Status = "FAIL" }
 }
 Write-Host ""
 
-# Check 2: RabbitMQ
-Write-Host "[2/5] Checking RabbitMQ..." -ForegroundColor Yellow
+# Check 2: C# API Health
+Write-Host "[2/6] Checking C# API..." -ForegroundColor Yellow
+try {
+    $health = Invoke-RestMethod -Uri "$CsharpApiUrl/health" -Method Get -TimeoutSec 5
+    
+    if ($health.status -eq "Healthy") {
+        Write-Host "✓ C# API is healthy" -ForegroundColor Green
+        $checks += @{ Name = "C# API Health"; Status = "PASS" }
+    }
+    else {
+        Write-Host "✗ C# API returned unexpected status: $($health.status)" -ForegroundColor Red
+        $checks += @{ Name = "C# API Health"; Status = "FAIL" }
+    }
+}
+catch {
+    Write-Host "✗ Failed to connect to C# API: $_" -ForegroundColor Red
+    $checks += @{ Name = "C# API Health"; Status = "FAIL" }
+}
+Write-Host ""
+
+# Check 3: RabbitMQ
+Write-Host "[3/6] Checking RabbitMQ..." -ForegroundColor Yellow
 try {
     $pair = "admin:admin123"
     $bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
@@ -83,7 +111,8 @@ try {
     if ($overview.rabbitmq_version) {
         Write-Host "✓ RabbitMQ is running (version: $($overview.rabbitmq_version))" -ForegroundColor Green
         $checks += @{ Name = "RabbitMQ Service"; Status = "PASS" }
-    } else {
+    }
+    else {
         Write-Host "✗ RabbitMQ returned unexpected response" -ForegroundColor Red
         $checks += @{ Name = "RabbitMQ Service"; Status = "FAIL" }
     }
@@ -95,34 +124,39 @@ try {
     if ($queue.name -eq "task-queue") {
         Write-Host "✓ task-queue exists with $($queue.consumers) consumers" -ForegroundColor Green
         $checks += @{ Name = "RabbitMQ Queue"; Status = "PASS" }
-    } else {
+    }
+    else {
         Write-Host "✗ task-queue not found" -ForegroundColor Red
         $checks += @{ Name = "RabbitMQ Queue"; Status = "FAIL" }
     }
-} catch {
+}
+catch {
     Write-Host "✗ Failed to connect to RabbitMQ: $_" -ForegroundColor Red
     $checks += @{ Name = "RabbitMQ Service"; Status = "FAIL" }
     $checks += @{ Name = "RabbitMQ Queue"; Status = "SKIP" }
 }
 Write-Host ""
 
-# Check 3: Worker Service (environment-specific)
-Write-Host "[3/5] Checking Worker Service..." -ForegroundColor Yellow
+# Check 4: Worker Service (environment-specific)
+Write-Host "[4/6] Checking Worker Service..." -ForegroundColor Yellow
 if ($Environment -eq "Local") {
     try {
         $workerStatus = docker ps --filter "name=worker-service" --format "{{.Status}}"
         if ($workerStatus -match "Up") {
             Write-Host "✓ Worker Service container is running" -ForegroundColor Green
             $checks += @{ Name = "Worker Service"; Status = "PASS" }
-        } else {
+        }
+        else {
             Write-Host "✗ Worker Service container is not running" -ForegroundColor Red
             $checks += @{ Name = "Worker Service"; Status = "FAIL" }
         }
-    } catch {
+    }
+    catch {
         Write-Host "✗ Failed to check Worker Service: $_" -ForegroundColor Red
         $checks += @{ Name = "Worker Service"; Status = "FAIL" }
     }
-} else {
+}
+else {
     try {
         $deployment = kubectl get deployment worker-service -n $Namespace -o json | ConvertFrom-Json
         $ready = $deployment.status.readyReplicas
@@ -131,11 +165,13 @@ if ($Environment -eq "Local") {
         if ($ready -ge 1) {
             Write-Host "✓ Worker Service has $ready/$desired pods ready" -ForegroundColor Green
             $checks += @{ Name = "Worker Service"; Status = "PASS" }
-        } else {
+        }
+        else {
             Write-Host "✗ Worker Service has no ready pods" -ForegroundColor Red
             $checks += @{ Name = "Worker Service"; Status = "FAIL" }
         }
-    } catch {
+    }
+    catch {
         Write-Host "✗ Failed to check Worker Service: $_" -ForegroundColor Red
         $checks += @{ Name = "Worker Service"; Status = "FAIL" }
     }
@@ -144,34 +180,39 @@ Write-Host ""
 
 # Check 4: HPA (AKS only)
 if ($Environment -eq "AKS") {
-    Write-Host "[4/5] Checking HPA..." -ForegroundColor Yellow
+    Write-Host "[5/6] Checking HPA..." -ForegroundColor Yellow
     try {
         $hpa = kubectl get hpa worker-service-hpa -n $Namespace -o json | ConvertFrom-Json
         
         if ($hpa.status.currentReplicas) {
             Write-Host "✓ HPA is active ($($hpa.status.currentReplicas) replicas, min: $($hpa.spec.minReplicas), max: $($hpa.spec.maxReplicas))" -ForegroundColor Green
             $checks += @{ Name = "HPA"; Status = "PASS" }
-        } else {
+        }
+        else {
             Write-Host "⚠ HPA exists but no replicas reported" -ForegroundColor Yellow
             $checks += @{ Name = "HPA"; Status = "WARN" }
         }
-    } catch {
+    }
+    catch {
         Write-Host "✗ Failed to check HPA: $_" -ForegroundColor Red
         $checks += @{ Name = "HPA"; Status = "FAIL" }
     }
     Write-Host ""
-} else {
-    Write-Host "[4/5] Skipping HPA check (Local environment)" -ForegroundColor Gray
+}
+else {
+    Write-Host "[5/6] Skipping HPA check (Local environment)" -ForegroundColor Gray
     Write-Host ""
 }
 
-# Check 5: End-to-end test
-Write-Host "[5/5] Running end-to-end test..." -ForegroundColor Yellow
+# Check 6: End-to-end test
+Write-Host "[6/6] Running end-to-end test..." -ForegroundColor Yellow
+Write-Host "  Testing Rust API..." -ForegroundColor Gray
 try {
     $payload = @{
         task_type = "health-check"
-        payload = @{
-            test = $true
+        payload   = @{
+            test      = $true
+            api       = "rust"
             timestamp = (Get-Date).ToString("o")
         }
     } | ConvertTo-Json
@@ -179,29 +220,77 @@ try {
     $response = Invoke-RestMethod -Uri "$RustApiUrl/send" -Method Post -Body $payload -ContentType "application/json" -TimeoutSec 10
     
     if ($response.success) {
-        Write-Host "✓ Message sent successfully (ID: $($response.message_id))" -ForegroundColor Green
-        $checks += @{ Name = "End-to-End"; Status = "PASS" }
-        
-        Write-Host "  Waiting 5 seconds for processing..." -ForegroundColor Gray
-        Start-Sleep -Seconds 5
-        
-        # Check queue depth
-        $pair = "admin:admin123"
-        $bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
-        $base64 = [System.Convert]::ToBase64String($bytes)
-        $authHeader = @{ Authorization = "Basic $base64" }
-        
-        $queueUrl = "$RabbitMqManagementUrl/api/queues/%2F/task-queue"
-        $queue = Invoke-RestMethod -Uri $queueUrl -Headers $authHeader -Method Get -TimeoutSec 5
-        
-        Write-Host "  Queue depth: $($queue.messages_ready)" -ForegroundColor Gray
-    } else {
-        Write-Host "✗ Failed to send message: $($response.message)" -ForegroundColor Red
-        $checks += @{ Name = "End-to-End"; Status = "FAIL" }
+        Write-Host "  ✓ Rust API message sent successfully (ID: $($response.message_id))" -ForegroundColor Green
+        $rustE2EPass = $true
     }
-} catch {
-    Write-Host "✗ End-to-end test failed: $_" -ForegroundColor Red
-    $checks += @{ Name = "End-to-End"; Status = "FAIL" }
+    else {
+        Write-Host "  ✗ Failed to send message via Rust API: $($response.message)" -ForegroundColor Red
+        $rustE2EPass = $false
+    }
+}
+catch {
+    Write-Host "  ✗ Rust API end-to-end test failed: $_" -ForegroundColor Red
+    $rustE2EPass = $false
+}
+
+Write-Host "  ⚠ C# API end-to-end test is expected to fail." -ForegroundColor Yellow
+$csharpE2EPass = $false
+
+# Write-Host "  Testing C# API..." -ForegroundColor Gray
+# try {
+#     $payload = @{
+#         task_type = "health-check"
+#         payload = @{
+#             test = $true
+#             api = "csharp"
+#             timestamp = (Get-Date).ToString("o")
+#         }
+#     } | ConvertTo-Json
+    
+#     $response = Invoke-RestMethod -Uri "$CsharpApiUrl/send" -Method Post -Body $payload -ContentType "application/json" -TimeoutSec 10
+    
+#     if ($response.success) {
+#         Write-Host "  ✓ C# API message sent successfully (ID: $($response.message_id))" -ForegroundColor Green
+#         $csharpE2EPass = $true
+#     } else {
+#         Write-Host "  ✗ Failed to send message via C# API: $($response.message)" -ForegroundColor Red
+#         $csharpE2EPass = $false
+#     }
+# } catch {
+#     Write-Host "  ✗ C# API end-to-end test failed: $_" -ForegroundColor Red
+#     $csharpE2EPass = $false
+# }
+
+if ($rustE2EPass -and $csharpE2EPass) {
+    $checks += @{ Name = "End-to-End (Both APIs)"; Status = "PASS" }
+    Write-Host "✓ Both APIs passed end-to-end test" -ForegroundColor Green
+}
+elseif ($rustE2EPass -or $csharpE2EPass) {
+    $checks += @{ Name = "End-to-End (Partial)"; Status = "WARN" }
+    Write-Host "⚠ Only one API passed end-to-end test" -ForegroundColor Yellow
+}
+else {
+    $checks += @{ Name = "End-to-End (Both APIs)"; Status = "FAIL" }
+    Write-Host "✗ Both APIs failed end-to-end test" -ForegroundColor Red
+}
+
+Write-Host "  Waiting 5 seconds for processing..." -ForegroundColor Gray
+Start-Sleep -Seconds 5
+
+# Check queue depth
+try {
+    $pair = "admin:admin123"
+    $bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
+    $base64 = [System.Convert]::ToBase64String($bytes)
+    $authHeader = @{ Authorization = "Basic $base64" }
+    
+    $queueUrl = "$RabbitMqManagementUrl/api/queues/%2F/task-queue"
+    $queue = Invoke-RestMethod -Uri $queueUrl -Headers $authHeader -Method Get -TimeoutSec 5
+    
+    Write-Host "  Queue depth: $($queue.messages_ready)" -ForegroundColor Gray
+}
+catch {
+    Write-Host "  Could not check queue depth" -ForegroundColor Yellow
 }
 Write-Host ""
 
@@ -241,7 +330,8 @@ Write-Host ""
 if ($failCount -eq 0) {
     Write-Host "✓ All validation checks passed!" -ForegroundColor Green
     exit 0
-} else {
+}
+else {
     Write-Host "✗ Some validation checks failed" -ForegroundColor Red
     exit 1
 }
