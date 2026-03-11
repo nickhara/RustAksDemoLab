@@ -348,7 +348,7 @@ fi
 if curl -f -s --max-time 3 http://localhost:5000/health >/dev/null 2>&1; then
     # Get actual health response
     health_response=$(curl -s --max-time 3 http://localhost:5000/health)
-    if echo "$health_response" | grep -q '"status":"Healthy"'; then
+    if echo "$health_response" | grep -q '"status":"healthy"'; then
         print_success "C# API: Health endpoint responsive on port 5000"
     else
         print_warning "C# API: Health endpoint returned unexpected response"
