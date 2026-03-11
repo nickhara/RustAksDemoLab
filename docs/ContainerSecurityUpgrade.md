@@ -6,9 +6,9 @@ This document describes the process for publishing patched container images to A
 
 ## Current Upgrade: March 2026
 
-**Target ACR:** `acrhelloapis202601221030.azurecr.io`
-**Subscription:** `9af68032-509a-4b77-b062-acbd56c079d7`
-**Image:** `hello-csharp-api:latest`
+**Target ACR:** `<acr-name>.azurecr.io`
+**Subscription:** `<subscription-id>`
+**Image:** `<image-name>:<image-tag>`
 
 ### Vulnerabilities Addressed
 
