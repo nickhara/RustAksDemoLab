@@ -15,11 +15,8 @@
 .PARAMETER MessageCount
     Number of test messages to send (default: 50)
 
-.PARAMETER RabbitMqUsername
-    RabbitMQ username (default: admin)
-
-.PARAMETER RabbitMqPassword
-    RabbitMQ password (default: admin123)
+.PARAMETER RabbitMqCredential
+    RabbitMQ credential (default: admin/admin123)
 
 .PARAMETER Namespace
     Kubernetes namespace (default: hello-apis)
@@ -44,10 +41,7 @@ param(
     [int]$MessageCount = 50,
     
     [Parameter()]
-    [string]$RabbitMqUsername = "admin",
-    
-    [Parameter()]
-    [string]$RabbitMqPassword = "admin123",
+    [pscredential]$RabbitMqCredential = [System.Management.Automation.PSCredential]::new("admin", (ConvertTo-SecureString "admin123" -AsPlainText -Force)),
     
     [Parameter()]
     [string]$Namespace = "hello-apis"
@@ -83,7 +77,7 @@ Write-Host ""
 Write-Host "[Step 3/5] Checking queue status..." -ForegroundColor Yellow
 Start-Sleep -Seconds 2
 
-$pair = "${RabbitMqUsername}:${RabbitMqPassword}"
+$pair = "$($RabbitMqCredential.UserName):$($RabbitMqCredential.GetNetworkCredential().Password)"
 $bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
 $base64 = [System.Convert]::ToBase64String($bytes)
 $authHeader = @{ Authorization = "Basic $base64" }
