@@ -152,22 +152,22 @@ Invoke-KubectlChecked -Arguments @("wait", "--for=condition=available", "deploym
 Write-Host "✓ C# API deployed" -ForegroundColor Green
 Write-Host ""
 
-# # Deploy Worker Service
-# Write-Host "[4/5] Deploying Worker Service..." -ForegroundColor Yellow
-# Invoke-KubectlChecked -Arguments @("apply", "-f", "$tempDir\worker-deployment.yaml") | Out-Null
-## kubectl apply -f "$tempDir\worker-deployment.yaml"
-# Write-Host "  Waiting for Worker Service to be ready..." -ForegroundColor Gray
-# Invoke-KubectlChecked -Arguments @("wait", "--for=condition=available", "deployment/worker-service", "-n", $Namespace, "--timeout=180s") | Out-Null
-## kubectl wait --for=condition=available deployment/worker-service -n $Namespace --timeout=180s
-# Write-Host "✓ Worker Service deployed" -ForegroundColor Green
-# Write-Host ""
+# Deploy Worker Service
+Write-Host "[4/5] Deploying Worker Service..." -ForegroundColor Yellow
+Invoke-KubectlChecked -Arguments @("apply", "-f", "$tempDir\worker-deployment.yaml") | Out-Null
+# kubectl apply -f "$tempDir\worker-deployment.yaml"
+Write-Host "  Waiting for Worker Service to be ready..." -ForegroundColor Gray
+Invoke-KubectlChecked -Arguments @("wait", "--for=condition=available", "deployment/worker-service", "-n", $Namespace, "--timeout=180s") | Out-Null
+# kubectl wait --for=condition=available deployment/worker-service -n $Namespace --timeout=180s
+Write-Host "✓ Worker Service deployed" -ForegroundColor Green
+Write-Host ""
 
-# # Deploy HPA
-# Write-Host "[5/5] Deploying HPA..." -ForegroundColor Yellow
-# Invoke-KubectlChecked -Arguments @("apply", "-f", "$tempDir\worker-hpa.yaml") | Out-Null 
-## kubectl apply -f "$tempDir\worker-hpa.yaml"
-# Write-Host "✓ HPA deployed" -ForegroundColor Green
-# Write-Host ""
+# Deploy HPA
+Write-Host "[5/5] Deploying HPA..." -ForegroundColor Yellow
+Invoke-KubectlChecked -Arguments @("apply", "-f", "$tempDir\worker-hpa.yaml") | Out-Null 
+# kubectl apply -f "$tempDir\worker-hpa.yaml"
+Write-Host "✓ HPA deployed" -ForegroundColor Green
+Write-Host ""
 
 # Cleanup temp directory
 Remove-Item -Path $tempDir -Recurse -Force
