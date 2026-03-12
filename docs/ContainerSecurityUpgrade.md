@@ -14,13 +14,13 @@ This document describes the process for publishing patched container images to A
 
 | Vuln ID   | Description                                          |
 |-----------|------------------------------------------------------|
-| 5007559   | Alpine Linux 3.23 Security Update for OpenSSL        |
-| 92355     | Alpine Linux 3.23 Security Update for OpenSSL        |
-| 6561246   | Microsoft .NET Security Update for February 2026     |
+| 5007559   | Alpine Linux OpenSSL vulnerabilities (patched via latest Alpine security updates at build time) |
+| 92355     | Additional Alpine Linux OpenSSL vulnerabilities (patched via latest Alpine security updates at build time) |
+| 6561246   | Microsoft .NET 10.0 February 2026 security update (via latest `mcr.microsoft.com/dotnet/aspnet:10.0-alpine` base image) |
 
 ### Remediation Strategy
 
-1. **Alpine OpenSSL fix:** Added `RUN apk upgrade --no-cache` to the Dockerfile runtime stage so Alpine packages (including OpenSSL) are upgraded at build time.
+1. **Alpine OpenSSL fix:** Apply the latest available Alpine security patches at build time by adding `RUN apk upgrade --no-cache` to the Dockerfile runtime stage so Alpine packages (including OpenSSL) are upgraded.
 2. **.NET security update:** Building with `docker build --pull` forces pulling the latest `mcr.microsoft.com/dotnet/aspnet:10.0-alpine` base image, which includes the .NET 10.0.3 February 2026 security patches.
 
 ## Future Upgrades
