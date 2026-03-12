@@ -201,7 +201,7 @@ Start-Sleep -Seconds 10
 
 $rustIp = (Invoke-KubectlChecked -Arguments @("get", "svc", "rust-hello-api", "-n", $Namespace, "-o", "jsonpath={.status.loadBalancer.ingress[0].ip}") | Out-String).Trim()
 $csharpIp = (Invoke-KubectlChecked -Arguments @("get", "svc", "csharp-hello-api", "-n", $Namespace, "-o", "jsonpath={.status.loadBalancer.ingress[0].ip}") | Out-String).Trim()
-#$rabbitmqIp = kubectl get svc rabbitmq-management -n $Namespace -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>$null
+$rabbitmqIp = (Invoke-KubectlChecked -Arguments @("get", "svc", "rabbitmq-management", "-n", $Namespace, "-o", "jsonpath={.status.loadBalancer.ingress[0].ip}") -AllowNonZeroExit | Out-String).Trim()
 
 if ($rustIp) {
     Write-Host "Rust API:              http://$rustIp" -ForegroundColor White
