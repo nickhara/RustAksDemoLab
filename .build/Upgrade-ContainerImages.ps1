@@ -165,8 +165,8 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 foreach ($img in $imageList) {
-    if ($img -notin ($failed | ForEach-Object { $imageConfig.Keys | Where-Object { $imageConfig[$_].DockerName -eq $_ } })) {
-        $dockerName = $imageConfig[$img].DockerName
+    $dockerName = $imageConfig[$img].DockerName
+    if ($dockerName -notin $failed) {
         Write-Host "Tags for ${dockerName}:" -ForegroundColor Yellow
         az acr repository show-tags --name $AcrName --repository $dockerName -o table 2>$null
         if ($LASTEXITCODE -ne 0) {
