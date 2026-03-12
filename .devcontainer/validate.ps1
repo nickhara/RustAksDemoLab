@@ -366,7 +366,7 @@ try {
 # Test C# API if running
 try {
     $health = Invoke-RestMethod -Uri "http://localhost:5000/health" -Method Get -TimeoutSec 3
-    if ($health.status -eq "Healthy") {
+    if ($health.status -eq "healthy") {
         Write-Success "C# API: Health endpoint responsive on port 5000"
     } else {
         Write-Warning "C# API: Health endpoint returned unexpected status: $($health.status)"
