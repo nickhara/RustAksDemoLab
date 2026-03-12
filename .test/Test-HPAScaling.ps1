@@ -15,11 +15,8 @@
 .PARAMETER RabbitMqManagement
     RabbitMQ Management URL (default: http://localhost:15672)
 
-.PARAMETER RabbitMqUsername
-    RabbitMQ username (default: admin)
-
-.PARAMETER RabbitMqPassword
-    RabbitMQ password (default: admin123)
+.PARAMETER RabbitMqCredential
+    RabbitMQ credential (default: admin/admin123)
 
 .EXAMPLE
     .\Test-HPAScaling.ps1
@@ -37,10 +34,7 @@ param(
     [string]$RabbitMqManagement = "http://localhost:15672",
     
     [Parameter()]
-    [string]$RabbitMqUsername = "admin",
-    
-    [Parameter()]
-    [string]$RabbitMqPassword = "admin123"
+    [pscredential]$RabbitMqCredential = [System.Management.Automation.PSCredential]::new("admin", (ConvertTo-SecureString "admin123" -AsPlainText -Force))
 )
 
 $ErrorActionPreference = "Stop"
@@ -52,9 +46,34 @@ Write-Host ""
 
 $testResults = @()
 
+function Invoke-KubectlChecked {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string[]]$Arguments,
+
+        [Parameter()]
+        [switch]$AllowNonZeroExit
+    )
+
+    $output = & kubectl @Arguments 2>&1
+    $exitCode = $LASTEXITCODE
+    $script:LastKubectlExitCode = $exitCode
+
+    if ($exitCode -ne 0 -and -not $AllowNonZeroExit) {
+        $outputText = ($output | Out-String).Trim()
+        throw "kubectl $($Arguments -join ' ') failed with exit code $exitCode. $outputText"
+    }
+
+    return $output
+}
+
 function Get-CurrentReplicas {
     try {
-        $deployment = kubectl get deployment worker-service -n $Namespace -o json | ConvertFrom-Json
+        $deploymentJson = (Invoke-KubectlChecked -Arguments @("get", "deployment", "worker-service", "-n", $Namespace, "-o", "json") -AllowNonZeroExit | Out-String)
+        if ($script:LastKubectlExitCode -ne 0 -or -not $deploymentJson.Trim()) {
+            return 0
+        }
+        $deployment = $deploymentJson | ConvertFrom-Json
         return $deployment.status.replicas
     } catch {
         return 0
@@ -63,7 +82,7 @@ function Get-CurrentReplicas {
 
 function Get-QueueDepth {
     try {
-        $pair = "${RabbitMqUsername}:${RabbitMqPassword}"
+        $pair = "$($RabbitMqCredential.UserName):$($RabbitMqCredential.GetNetworkCredential().Password)"
         $bytes = [System.Text.Encoding]::ASCII.GetBytes($pair)
         $base64 = [System.Convert]::ToBase64String($bytes)
         $authHeader = @{ Authorization = "Basic $base64" }

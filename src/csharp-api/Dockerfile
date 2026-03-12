@@ -18,6 +18,9 @@ RUN dotnet publish -c Release -o /app/publish
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS runtime
 
+# Apply latest Alpine security patches (OpenSSL, etc.)
+RUN apk upgrade --no-cache
+
 # Create non-root user for security
 RUN addgroup -g 1000 appgroup && \
     adduser -u 1000 -G appgroup -s /bin/sh -D appuser

@@ -51,10 +51,31 @@ Write-Host ""
 $rootDir = Split-Path -Parent $PSScriptRoot
 $k8sDir = "$rootDir\src\k8s"
 
+function Invoke-KubectlChecked {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string[]]$Arguments,
+
+        [Parameter()]
+        [switch]$AllowNonZeroExit
+    )
+
+    $output = & kubectl @Arguments 2>&1
+    $exitCode = $LASTEXITCODE
+    $script:LastKubectlExitCode = $exitCode
+
+    if ($exitCode -ne 0 -and -not $AllowNonZeroExit) {
+        $outputText = ($output | Out-String).Trim()
+        throw "kubectl $($Arguments -join ' ') failed with exit code $exitCode. $outputText"
+    }
+
+    return $output
+}
+
 # Verify kubectl connectivity
 Write-Host "Verifying Kubernetes connectivity..." -ForegroundColor Yellow
 try {
-    kubectl cluster-info | Out-Null
+    Invoke-KubectlChecked -Arguments @("cluster-info") | Out-Null
     Write-Host "✓ Connected to Kubernetes cluster" -ForegroundColor Green
 }
 catch {
@@ -66,10 +87,20 @@ Write-Host ""
 
 # Create namespace if it doesn't exist
 Write-Host "Checking namespace..." -ForegroundColor Yellow
-$namespaceExists = kubectl get namespace $Namespace 2>&1 | Select-String -Pattern $Namespace -Quiet
-if (-not $namespaceExists) {
+$namespaceCheckOutput = Invoke-KubectlChecked -Arguments @("get", "namespace", $Namespace, "-o", "name") -AllowNonZeroExit
+if ($script:LastKubectlExitCode -ne 0) {
+    $namespaceCheckText = ($namespaceCheckOutput | Out-String)
+    if ($namespaceCheckText -match "NotFound|not found") {
+        Write-Host "  Creating namespace '$Namespace'..." -ForegroundColor Gray
+        Invoke-KubectlChecked -Arguments @("create", "namespace", $Namespace) | Out-Null
+    }
+    else {
+        throw "Failed to check namespace '$Namespace'. $namespaceCheckText"
+    }
+}
+elseif (-not ($namespaceCheckOutput | Out-String).Trim()) {
     Write-Host "  Creating namespace '$Namespace'..." -ForegroundColor Gray
-    kubectl apply -f "$k8sDir\namespace.yaml"
+    Invoke-KubectlChecked -Arguments @("create", "namespace", $Namespace) | Out-Null
 }
 Write-Host "✓ Namespace ready" -ForegroundColor Green
 Write-Host ""
@@ -93,10 +124,10 @@ Write-Host ""
 # Deploy RabbitMQ
 if (-not $SkipRabbitMQ) {
     Write-Host "[1/5] Deploying RabbitMQ..." -ForegroundColor Yellow
-    kubectl apply -f "$tempDir\rabbitmq-deployment.yaml"
+    Invoke-KubectlChecked -Arguments @("apply", "-f", "$tempDir\rabbitmq-deployment.yaml") | Out-Null
     
     Write-Host "  Waiting for RabbitMQ to be ready..." -ForegroundColor Gray
-    kubectl wait --for=condition=ready pod -l app=rabbitmq -n $Namespace --timeout=180s
+    Invoke-KubectlChecked -Arguments @("wait", "--for=condition=ready", "pod", "-l", "app=rabbitmq", "-n", $Namespace, "--timeout=180s") | Out-Null
     Write-Host "✓ RabbitMQ deployed" -ForegroundColor Green
     Write-Host ""
 }
@@ -107,31 +138,34 @@ else {
 
 # Deploy Rust API
 Write-Host "[2/5] Deploying Rust API..." -ForegroundColor Yellow
-kubectl apply -f "$tempDir\rust-deployment.yaml"
+Invoke-KubectlChecked -Arguments @("apply", "-f", "$tempDir\rust-deployment.yaml") | Out-Null
 Write-Host "  Waiting for Rust API to be ready..." -ForegroundColor Gray
-kubectl wait --for=condition=available deployment/rust-hello-api -n $Namespace --timeout=180s
+Invoke-KubectlChecked -Arguments @("wait", "--for=condition=available", "deployment/rust-hello-api", "-n", $Namespace, "--timeout=180s") | Out-Null
 Write-Host "✓ Rust API deployed" -ForegroundColor Green
 Write-Host ""
 
 # Deploy C# API
 Write-Host "[3/5] Deploying C# API..." -ForegroundColor Yellow
-kubectl apply -f "$tempDir\csharp-deployment.yaml"
+Invoke-KubectlChecked -Arguments @("apply", "-f", "$tempDir\csharp-deployment.yaml") | Out-Null
 Write-Host "  Waiting for C# API to be ready..." -ForegroundColor Gray
-kubectl wait --for=condition=available deployment/csharp-hello-api -n $Namespace --timeout=180s
+Invoke-KubectlChecked -Arguments @("wait", "--for=condition=available", "deployment/csharp-hello-api", "-n", $Namespace, "--timeout=180s") | Out-Null
 Write-Host "✓ C# API deployed" -ForegroundColor Green
 Write-Host ""
 
 # Deploy Worker Service
 Write-Host "[4/5] Deploying Worker Service..." -ForegroundColor Yellow
-kubectl apply -f "$tempDir\worker-deployment.yaml"
+Invoke-KubectlChecked -Arguments @("apply", "-f", "$tempDir\worker-deployment.yaml") | Out-Null
+# kubectl apply -f "$tempDir\worker-deployment.yaml"
 Write-Host "  Waiting for Worker Service to be ready..." -ForegroundColor Gray
-kubectl wait --for=condition=available deployment/worker-service -n $Namespace --timeout=180s
+Invoke-KubectlChecked -Arguments @("wait", "--for=condition=available", "deployment/worker-service", "-n", $Namespace, "--timeout=180s") | Out-Null
+# kubectl wait --for=condition=available deployment/worker-service -n $Namespace --timeout=180s
 Write-Host "✓ Worker Service deployed" -ForegroundColor Green
 Write-Host ""
 
 # Deploy HPA
 Write-Host "[5/5] Deploying HPA..." -ForegroundColor Yellow
-kubectl apply -f "$tempDir\worker-hpa.yaml"
+Invoke-KubectlChecked -Arguments @("apply", "-f", "$tempDir\worker-hpa.yaml") | Out-Null 
+# kubectl apply -f "$tempDir\worker-hpa.yaml"
 Write-Host "✓ HPA deployed" -ForegroundColor Green
 Write-Host ""
 
@@ -145,15 +179,15 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 Write-Host "Pods:" -ForegroundColor Yellow
-kubectl get pods -n $Namespace
+Invoke-KubectlChecked -Arguments @("get", "pods", "-n", $Namespace)
 Write-Host ""
 
 Write-Host "Services:" -ForegroundColor Yellow
-kubectl get services -n $Namespace
+Invoke-KubectlChecked -Arguments @("get", "services", "-n", $Namespace)
 Write-Host ""
 
 Write-Host "HPA:" -ForegroundColor Yellow
-kubectl get hpa -n $Namespace
+Invoke-KubectlChecked -Arguments @("get", "hpa", "-n", $Namespace)
 Write-Host ""
 
 # Get external IPs
@@ -165,9 +199,9 @@ Write-Host ""
 Write-Host "Waiting for external IPs to be assigned..." -ForegroundColor Yellow
 Start-Sleep -Seconds 10
 
-$rustIp = kubectl get svc rust-hello-api -n $Namespace -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>$null
-$csharpIp = kubectl get svc csharp-hello-api -n $Namespace -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>$null
-$rabbitmqIp = kubectl get svc rabbitmq-management -n $Namespace -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>$null
+$rustIp = (Invoke-KubectlChecked -Arguments @("get", "svc", "rust-hello-api", "-n", $Namespace, "-o", "jsonpath={.status.loadBalancer.ingress[0].ip}") | Out-String).Trim()
+$csharpIp = (Invoke-KubectlChecked -Arguments @("get", "svc", "csharp-hello-api", "-n", $Namespace, "-o", "jsonpath={.status.loadBalancer.ingress[0].ip}") | Out-String).Trim()
+$rabbitmqIp = (Invoke-KubectlChecked -Arguments @("get", "svc", "rabbitmq-management", "-n", $Namespace, "-o", "jsonpath={.status.loadBalancer.ingress[0].ip}") -AllowNonZeroExit | Out-String).Trim()
 
 if ($rustIp) {
     Write-Host "Rust API:              http://$rustIp" -ForegroundColor White
