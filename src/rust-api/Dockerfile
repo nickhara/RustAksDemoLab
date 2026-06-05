@@ -1,5 +1,5 @@
 # Build stage
-FROM rust:1.92-alpine AS builder
+FROM rust:1.96-alpine AS builder
 
 # Install build dependencies
 RUN apk add --no-cache musl-dev
@@ -22,7 +22,7 @@ COPY src ./src
 RUN touch src/main.rs && cargo build --release
 
 # Runtime stage
-FROM alpine:3.21
+FROM alpine:3.22
 
 # Install runtime dependencies and apply OS-level security patches
 RUN apk upgrade --no-cache && \
