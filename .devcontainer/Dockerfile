@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/devcontainers/universal:2
+FROM mcr.microsoft.com/devcontainers/universal:6
 
 # Fix: Remove the broken Yarn repository from the apt sources.
 # This prevents 'apt-get update' from failing due to the missing GPG key.
