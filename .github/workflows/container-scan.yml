@@ -1,0 +1,170 @@
+name: Container image CVE scan
+
+# Builds each application image and scans it with Trivy. Results are
+# uploaded to GitHub Code Scanning so CVEs show up in Security > Code
+# scanning alerts. Also scans third-party images (rabbitmq) directly.
+#
+# Runs on:
+#   - pushes to main that touch Dockerfiles / compose / src
+#   - pull requests touching the same paths
+#   - weekly schedule, to catch newly disclosed CVEs in unchanged images
+#   - manual dispatch
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**/Dockerfile"
+      - "src/**"
+      - "docker-compose*.yml"
+      - ".devcontainer/**"
+      - ".github/workflows/container-scan.yml"
+  pull_request:
+    paths:
+      - "src/**/Dockerfile"
+      - "src/**"
+      - "docker-compose*.yml"
+      - ".devcontainer/**"
+      - ".github/workflows/container-scan.yml"
+  schedule:
+    - cron: "0 6 * * 1" # Monday 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # Required to upload SARIF results to Code Scanning
+  security-events: write
+  # Required by github/codeql-action when running on private repos
+  actions: read
+
+concurrency:
+  group: container-scan-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Scan each application image we build ourselves.
+  build-and-scan:
+    name: Scan ${{ matrix.image.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - name: rust-api
+            context: src/rust-api
+            dockerfile: src/rust-api/Dockerfile
+          - name: csharp-api
+            context: src/csharp-api
+            dockerfile: src/csharp-api/Dockerfile
+          - name: worker-service
+            context: src/worker-service/WorkerService
+            dockerfile: src/worker-service/WorkerService/Dockerfile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image (load into local daemon)
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.image.context }}
+          file: ${{ matrix.image.dockerfile }}
+          push: false
+          load: true
+          tags: ${{ matrix.image.name }}:scan
+          cache-from: type=gha,scope=${{ matrix.image.name }}
+          cache-to: type=gha,scope=${{ matrix.image.name }},mode=max
+
+      - name: Trivy image scan (SARIF)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ matrix.image.name }}:scan
+          format: sarif
+          output: trivy-${{ matrix.image.name }}.sarif
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH,MEDIUM
+        env:
+          # Cache the vulnerability DB across runs to avoid rate limits
+          TRIVY_CACHE_DIR: .trivycache
+
+      - name: Upload SARIF to Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-${{ matrix.image.name }}.sarif
+          category: trivy-${{ matrix.image.name }}
+
+      - name: Trivy image scan (table, for log)
+        if: always()
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ matrix.image.name }}:scan
+          format: table
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH
+          exit-code: "0"
+
+  # Scan third-party base images we run but don't build.
+  scan-thirdparty:
+    name: Scan ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - rabbitmq:3.13-management
+          - redis:7-alpine
+          - postgres:16-alpine
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sanitize image name for SARIF category
+        id: name
+        run: |
+          slug="$(echo '${{ matrix.image }}' | tr ':/' '--')"
+          echo "slug=$slug" >> "$GITHUB_OUTPUT"
+
+      - name: Trivy image scan (SARIF)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ matrix.image }}
+          format: sarif
+          output: trivy-${{ steps.name.outputs.slug }}.sarif
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: CRITICAL,HIGH,MEDIUM
+
+      - name: Upload SARIF to Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-${{ steps.name.outputs.slug }}.sarif
+          category: trivy-${{ steps.name.outputs.slug }}
+
+  # Scan Dockerfiles + IaC for misconfigurations (non-image issues).
+  config-scan:
+    name: Scan repo config (Dockerfile, k8s, compose)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trivy config scan (SARIF)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: .
+          format: sarif
+          output: trivy-config.sarif
+          severity: CRITICAL,HIGH,MEDIUM
+
+      - name: Upload SARIF to Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-config.sarif
+          category: trivy-config
