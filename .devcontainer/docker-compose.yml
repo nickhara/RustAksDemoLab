@@ -6,7 +6,7 @@ version: '3.8'
 services:
   # RabbitMQ for message queue development
   rabbitmq-dev:
-    image: rabbitmq:3.13-management
+    image: rabbitmq:4.1-management
     container_name: rabbitmq-dev
     ports:
       - "5672:5672"   # AMQP port
@@ -26,7 +26,7 @@ services:
 
   # Optional: Redis for caching/session management
   redis-dev:
-    image: redis:7-alpine
+    image: redis:7.2.14-alpine
     container_name: redis-dev
     ports:
       - "6379:6379"
@@ -39,7 +39,7 @@ services:
 
   # Optional: PostgreSQL for data persistence
   postgres-dev:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     container_name: postgres-dev
     ports:
       - "5432:5432"
