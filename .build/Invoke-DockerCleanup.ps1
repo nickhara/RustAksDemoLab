@@ -477,6 +477,14 @@ try {
     exit 2
 }
 
+# Guard against accidentally targeting a remote daemon via DOCKER_HOST.
+if ($Mode -ne 'Survey' -and -not [string]::IsNullOrWhiteSpace($env:DOCKER_HOST) -and $env:DOCKER_HOST -match '^(?i)tcp://') {
+    Write-Log "DOCKER_HOST is set to '$($env:DOCKER_HOST)'; this script can prune remote resources." -Level WARN
+    if (-not (Confirm-Or-Exit "Proceed while DOCKER_HOST targets a remote engine")) {
+        Write-Log "User declined due to remote DOCKER_HOST; exiting." -Level WARN
+        exit 0
+    }
+}
 # 2. Survey (always run)
 Write-Log "--- Survey ---"
 $before = Get-DockerSurvey
