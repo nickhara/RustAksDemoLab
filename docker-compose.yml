@@ -1,5 +1,3 @@
-version: "3.8"
-
 # Infrastructure-only setup for dev container workflow
 # Applications run directly in dev container for faster development iteration
 # For full containerized setup, use: docker-compose -f docker-compose.full.yml up

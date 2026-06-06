@@ -11,8 +11,28 @@ The system consists of:
 
 This lab demonstrates cloud-native patterns including message queuing, worker pools, and auto-scaling in Kubernetes.
 
+## Lab Version
+
+This lab is stabilized on the **`lab2-v1.0`** tag and the **`labs/lab2`** branch.
+
+To follow this lab against a known-good snapshot of the repository:
+
+```powershell
+git fetch --tags
+git checkout lab2-v1.0
+```
+
+To make changes while following along, create a working branch from the tag:
+
+```powershell
+git checkout -b my-lab2-work lab2-v1.0
+```
+
+For the latest in-progress version of the lab, use the `main` branch or the long-lived `labs/lab2` branch (which tracks the tip of this lab).
+
 ## Table of Contents
 
+- [Lab Version](#lab-version)
 - [Prerequisites](#prerequisites)
 - [Architecture Overview](#architecture-overview)
 - [Message Format and Flow](#message-format-and-flow)
@@ -443,7 +463,7 @@ worker-service      (new)
 (Get-Content src/k8s/worker-deployment.yaml) -replace '<your-acr-name>', $ACR_NAME | Set-Content src/k8s/worker-deployment.yaml
 
 # Update Rust API deployment (if not already updated)
-(Get-Content src/k8s/rust-api-mq-deployment.yaml) -replace '<your-acr-name>', $ACR_NAME | Set-Content src/k8s/rust-api-mq-deployment.yaml
+(Get-Content src/k8s/rust-deployment.yaml) -replace '<your-acr-name>', $ACR_NAME | Set-Content src/k8s/rust-deployment.yaml
 ```
 
 ### 2.3 Create Kubernetes Secrets
@@ -498,11 +518,11 @@ kubectl logs -l app=rabbitmq -n hello-apis --tail=50
 kubectl apply -f src/k8s/rust-deployment.yaml
 
 # Wait for pods to be ready
-kubectl wait --for=condition=ready pod -l app=rust-api-mq -n hello-apis --timeout=300s
+kubectl wait --for=condition=ready pod -l app=rust-hello-api -n hello-apis --timeout=300s
 
 # Check API status
-kubectl get pods -l app=rust-api-mq -n hello-apis
-kubectl get svc rust-api-mq -n hello-apis
+kubectl get pods -l app=rust-hello-api -n hello-apis
+kubectl get svc rust-hello-api -n hello-apis
 ```
 
 ### 2.6 Deploy Worker Service
@@ -549,7 +569,7 @@ kubectl get pods -n hello-apis
 # Expected output:
 # NAME                              READY   STATUS    RESTARTS   AGE
 # rabbitmq-0                        1/1     Running   0          5m
-# rust-api-mq-xxx                   1/1     Running   0          3m
+# rust-hello-api-xxx                   1/1     Running   0          3m
 # worker-service-xxx                1/1     Running   0          2m
 
 # Check all services
@@ -565,10 +585,10 @@ kubectl get hpa -n hello-apis
 
 ```powershell
 # Wait for external IP to be assigned
-kubectl get svc rust-api-mq -n hello-apis -w
+kubectl get svc rust-hello-api -n hello-apis -w
 
 # Get external IP
-$API_IP = kubectl get svc rust-api-mq -n hello-apis -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+$API_IP = kubectl get svc rust-hello-api -n hello-apis -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
 Write-Host "API URL: http://$API_IP"
 
 # Test basic connectivity
@@ -1204,20 +1224,20 @@ kubectl exec -it rabbitmq-0 -n hello-apis -- rabbitmqctl list_queues name consum
 
 ```powershell
 # Check API logs
-kubectl logs -l app=rust-api-mq -n hello-apis --tail=100
+kubectl logs -l app=rust-hello-api -n hello-apis --tail=100
 
 # Verify API can reach RabbitMQ
 kubectl exec -it <rust-api-pod> -n hello-apis -- /bin/sh
 # (inside pod) nc -zv rabbitmq 5672
 
 # Check environment variables
-kubectl describe pod -l app=rust-api-mq -n hello-apis | Select-String -Pattern "RABBITMQ"
+kubectl describe pod -l app=rust-hello-api -n hello-apis | Select-String -Pattern "RABBITMQ"
 
 # Test RabbitMQ credentials
 kubectl exec -it rabbitmq-0 -n hello-apis -- rabbitmqctl authenticate_user admin admin123
 
 # Restart API pods
-kubectl rollout restart deployment rust-api-mq -n hello-apis
+kubectl rollout restart deployment rust-hello-api -n hello-apis
 ```
 
 #### High CPU but No Scaling
@@ -1322,7 +1342,7 @@ docker-compose down --remove-orphans
 # Delete Lab 2 resources only
 kubectl delete -f src/k8s/worker-hpa.yaml
 kubectl delete -f src/k8s/worker-deployment.yaml
-kubectl delete -f src/k8s/rust-api-mq-deployment.yaml
+kubectl delete -f src/k8s/rust-deployment.yaml
 kubectl delete -f src/k8s/rabbitmq-deployment.yaml
 
 # Delete secrets
