@@ -281,14 +281,11 @@ function Get-ProtectedImageIds {
         $kctx = $null
 
         try {
-
             $kctx = & kubectl config current-context 2>$null
-
         } catch {
-
             Write-Log "kubectl not available; skipping Kubernetes image protection." -Level DEBUG
-
         }
+    }
 
 
 
@@ -382,7 +379,7 @@ function Remove-StaleContainers {
             $removed++
             $out | ForEach-Object { Write-Log "  $_" -Level DEBUG }
         } else {
-            Write-Log "  could not remove container $id: $out" -Level WARN
+            Write-Log "  could not remove container ($id): $out" -Level WARN
         }
     }
     return $removed
@@ -477,14 +474,22 @@ try {
     exit 2
 }
 
-# Guard against accidentally targeting a remote daemon via DOCKER_HOST.
-if ($Mode -ne 'Survey' -and -not [string]::IsNullOrWhiteSpace($env:DOCKER_HOST) -and $env:DOCKER_HOST -match '^(?i)tcp://') {
-    Write-Log "DOCKER_HOST is set to '$($env:DOCKER_HOST)'; this script can prune remote resources." -Level WARN
-    if (-not (Confirm-Or-Exit "Proceed while DOCKER_HOST targets a remote engine")) {
-        Write-Log "User declined due to remote DOCKER_HOST; exiting." -Level WARN
-        exit 0
-    }
-}
+# Guard against accidentally targeting a remote daemon via DOCKER_HOST.
+
+if ($Mode -ne 'Survey' -and -not [string]::IsNullOrWhiteSpace($env:DOCKER_HOST) -and $env:DOCKER_HOST -match '^(?i)tcp://') {
+
+    Write-Log "DOCKER_HOST is set to '$($env:DOCKER_HOST)'; this script can prune remote resources." -Level WARN
+
+    if (-not (Confirm-Or-Exit "Proceed while DOCKER_HOST targets a remote engine")) {
+
+        Write-Log "User declined due to remote DOCKER_HOST; exiting." -Level WARN
+
+        exit 0
+
+    }
+
+}
+
 # 2. Survey (always run)
 Write-Log "--- Survey ---"
 $before = Get-DockerSurvey
@@ -526,14 +531,14 @@ $summary.BytesFreedImages += Invoke-DockerPrune -Resource 'network'
 
 if ($Mode -eq 'Safe') {
     $r = Remove-Images-Unused -ProtectedIds $protected.Ids -Reasons $protected.Reasons
-    $summary.ImagesRemoved   += $r.Count
+    $summary.ImagesRemoved += $r.Count
     $summary.BytesFreedImages += $r.BytesFreed
 }
 
 if ($Mode -in 'Standard', 'Aggressive') {
     $includeAll = ($Mode -eq 'Aggressive')
     $r = Remove-Images-Unused -ProtectedIds $protected.Ids -Reasons $protected.Reasons -IncludeAll:$includeAll
-    $summary.ImagesRemoved   += $r.Count
+    $summary.ImagesRemoved += $r.Count
     $summary.BytesFreedImages += $r.BytesFreed
 
     if ($IncludeBuildCache) {
@@ -546,13 +551,10 @@ if ($Mode -eq 'Aggressive' -or ($Mode -eq 'Standard' -and $IncludeVolumes)) {
 }
 
 # 6. Final survey + summary
-Write-Log "  Stale containers $verb: $($summary.StaleContainersRemoved)"
-Write-Log "  Images $verb:           $($summary.ImagesRemoved)"
+Write-Log "  Stale containers ($verb): $($summary.StaleContainersRemoved)"
+Write-Log "  Images ($verb):           $($summary.ImagesRemoved)"
 foreach ($k in $after.Keys) {
     $v = $after[$k]
-
-Write-Log "  Images $verb:           $($summary.ImagesRemoved)"
-
     Write-Log ("  {0,-14} total={1,4} active={2,4} size={3,-10} reclaimable={4}" -f $k, $v.Total, $v.Active, $v.Size, $v.Reclaimable)
 }
 
