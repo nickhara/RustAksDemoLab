@@ -278,13 +278,20 @@ function Get-ProtectedImageIds {
                 Add-ProtectedId $id "devcontainer base for active vsc-* image '$name'"
             }
         }
-        $kctx = $null
-        try {
-            $kctx = & kubectl config current-context 2>$null
-        } catch {
-            Write-Log "kubectl not available; skipping Kubernetes image protection." -Level DEBUG
-        }
-
+        $kctx = $null
+
+        try {
+
+            $kctx = & kubectl config current-context 2>$null
+
+        } catch {
+
+            Write-Log "kubectl not available; skipping Kubernetes image protection." -Level DEBUG
+
+        }
+
+
+
 
     # 4. Docker Desktop Kubernetes images (when current context = docker-desktop)
     if (-not $SkipKubectlProtection) {
@@ -531,9 +538,6 @@ if ($Mode -eq 'Aggressive' -or ($Mode -eq 'Standard' -and $IncludeVolumes)) {
 }
 
 # 6. Final survey + summary
-Write-Log "--- Post-cleanup survey ---"
-$after = Get-DockerSurvey
-$verb = if ($DryRun) { 'planned' } else { 'removed' }
 Write-Log "  Stale containers $verb: $($summary.StaleContainersRemoved)"
 Write-Log "  Images $verb:           $($summary.ImagesRemoved)"
 foreach ($k in $after.Keys) {
