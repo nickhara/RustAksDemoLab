@@ -210,11 +210,10 @@ When invoked from a scheduled prompt or by autopilot:
 - **Don't touch running containers.** The skill only ever removes resources
   in exited / dead / dangling states. If the user wants to stop something,
   they ask explicitly.
-- **Don't delete volumes by default.** Volume removal is opt-in via
-  `-IncludeVolumes`, and even then must be flagged in the user-facing summary.
+- **Don't delete volumes by default in Standard mode.** Volume removal is opt-in via
+  `-IncludeVolumes`; **Aggressive always prunes unused volumes**, so only recommend it after explicit user confirmation and flag it in the summary.
 - **Don't bypass the protection logic.** If a user asks "just delete
-  everything", confirm the request and use `-Mode Aggressive -IncludeVolumes
-  -Force`, but never edit the protection lists at runtime.
+  everything", confirm the request and use `-Mode Aggressive -Force`, but never edit the protection lists at runtime.
 - **Don't restart Docker Desktop unattended** to "fix" cleanup failures.
   Surface the failure and let the user decide.
 - **Don't run on remote daemons.** This is a workstation-cleanup tool. If
