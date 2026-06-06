@@ -11,8 +11,28 @@ The system consists of:
 
 This lab demonstrates cloud-native patterns including message queuing, worker pools, and auto-scaling in Kubernetes.
 
+## Lab Version
+
+This lab is stabilized on the **`lab2-v1.0`** tag and the **`labs/lab2`** branch.
+
+To follow this lab against a known-good snapshot of the repository:
+
+```powershell
+git fetch --tags
+git checkout lab2-v1.0
+```
+
+To make changes while following along, create a working branch from the tag:
+
+```powershell
+git checkout -b my-lab2-work lab2-v1.0
+```
+
+For the latest in-progress version of the lab, use the `main` branch or the long-lived `labs/lab2` branch (which tracks the tip of this lab).
+
 ## Table of Contents
 
+- [Lab Version](#lab-version)
 - [Prerequisites](#prerequisites)
 - [Architecture Overview](#architecture-overview)
 - [Message Format and Flow](#message-format-and-flow)

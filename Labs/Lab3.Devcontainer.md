@@ -16,8 +16,28 @@ This lab covers:
 This lab demonstrates modern cloud-native development practices including containerized development
 environments, dual-mode workflows, and seamless progression from local development to production deployment.
 
+## Lab Version
+
+This lab is stabilized on the **`lab3-v1.0`** tag and the **`labs/lab3`** branch.
+
+To follow this lab against a known-good snapshot of the repository:
+
+```powershell
+git fetch --tags
+git checkout lab3-v1.0
+```
+
+To make changes while following along, create a working branch from the tag:
+
+```powershell
+git checkout -b my-lab3-work lab3-v1.0
+```
+
+For the latest in-progress version of the lab, use the `main` branch or the long-lived `labs/lab3` branch (which tracks the tip of this lab).
+
 ## Table of Contents
 
+- [Lab Version](#lab-version)
 - [Prerequisites](#prerequisites)
 - [Development Environment Architecture](#development-environment-architecture)
 - [Devcontainer Deep Dive](#devcontainer-deep-dive)
