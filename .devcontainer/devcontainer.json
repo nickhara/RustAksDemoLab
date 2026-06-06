@@ -40,13 +40,12 @@
         // Rust extensions
         "rust-lang.rust-analyzer",
         "vadimcn.vscode-lldb",
-        "serayuzgur.crates",
+        "fill-labs.dependi",
         // C# extensions
         "ms-dotnettools.csharp",
         "ms-dotnettools.csdevkit",
         "ms-dotnettools.vscode-dotnet-runtime",
         // Azure extensions
-        "ms-vscode.azure-account",
         "ms-azuretools.azure-dev",
         "ms-azuretools.vscode-bicep",
         "ms-azuretools.vscode-azureresourcegroups",
@@ -60,7 +59,6 @@
         // PowerShell
         "ms-vscode.powershell",
         // General development
-        "ms-vscode.vscode-json",
         "redhat.vscode-yaml",
         "ms-vscode.cmake-tools",
         "ms-vscode.makefile-tools",
@@ -77,8 +75,6 @@
         "rust-analyzer.cargo.features": "all",
         // C# settings
         "dotnet.defaultSolution": "src/RustKubernetesDemo.sln",
-        "omnisharp.enableImportCompletion": true,
-        "omnisharp.enableRoslynAnalyzers": true,
         // Docker settings
         "docker.containers.groupBy": "None",
         "docker.containers.sortBy": "CreatedTime",
