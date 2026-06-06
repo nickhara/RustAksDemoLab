@@ -35,8 +35,8 @@
     Skip the confirmation prompt before destructive operations.
 
 .PARAMETER MaxAgeDays
-    Containers / images older than this many days are eligible for cleanup
-    in Safe and Standard modes. Default 30.
+    Containers older than this many days are eligible for removal (when in exited / dead / created state).
+    Default 30.
 
 .PARAMETER IncludeVolumes
     Allow Standard mode to prune unused named volumes. Aggressive always
