@@ -304,13 +304,20 @@ function Get-ProtectedImageIds {
         $allImages = Invoke-Docker images --format '{{.ID}}|{{.Repository}}:{{.Tag}}'
         foreach ($row in $allImages) {
             $parts = $row -split '\|'
-                try {
-                    if ($name -match $p -or $id -match $p) {
-                        Add-ProtectedId $id "user ignore pattern '$p'"
-                        break
-                    }
-                } catch {
-                    Write-Log "IgnoreImage pattern '$p' is not a valid regex; skipping" -Level WARN
+                try {
+
+                    if ($name -match $p -or $id -match $p) {
+
+                        Add-ProtectedId $id "user ignore pattern '$p'"
+
+                        break
+
+                    }
+
+                } catch {
+
+                    Write-Log "IgnoreImage pattern '$p' is not a valid regex; skipping" -Level WARN
+
                     Add-ProtectedId $id "user ignore pattern '$p'"
                     break
                 }
@@ -520,8 +527,9 @@ if ($Mode -eq 'Aggressive' -or ($Mode -eq 'Standard' -and $IncludeVolumes)) {
 # 6. Final survey + summary
 Write-Log "--- Post-cleanup survey ---"
 $after = Get-DockerSurvey
-foreach ($k in $after.Keys) {
-    $v = $after[$k]
+$verb = if ($DryRun) { 'planned' } else { 'removed' }
+Write-Log "  Stale containers $verb: $($summary.StaleContainersRemoved)"
+Write-Log "  Images $verb:           $($summary.ImagesRemoved)"
     Write-Log ("  {0,-14} total={1,4} active={2,4} size={3,-10} reclaimable={4}" -f $k, $v.Total, $v.Active, $v.Size, $v.Reclaimable)
 }
 
