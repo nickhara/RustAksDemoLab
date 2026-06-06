@@ -35,8 +35,10 @@
     Skip the confirmation prompt before destructive operations.
 
 .PARAMETER MaxAgeDays
-    Containers older than this many days are eligible for removal (when in exited / dead / created state).
-    Default 30.
+    Containers older than this many days are eligible for removal (when in exited / dead / created state).
+
+    Default 30.
+
 
 .PARAMETER IncludeVolumes
     Allow Standard mode to prune unused named volumes. Aggressive always
@@ -302,9 +304,13 @@ function Get-ProtectedImageIds {
         $allImages = Invoke-Docker images --format '{{.ID}}|{{.Repository}}:{{.Tag}}'
         foreach ($row in $allImages) {
             $parts = $row -split '\|'
-            $id = $parts[0]; $name = $parts[1]
-            foreach ($p in $IgnoreImage) {
-                if ($name -match $p -or $id -match $p) {
+                try {
+                    if ($name -match $p -or $id -match $p) {
+                        Add-ProtectedId $id "user ignore pattern '$p'"
+                        break
+                    }
+                } catch {
+                    Write-Log "IgnoreImage pattern '$p' is not a valid regex; skipping" -Level WARN
                     Add-ProtectedId $id "user ignore pattern '$p'"
                     break
                 }
