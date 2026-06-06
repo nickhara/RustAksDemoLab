@@ -130,7 +130,7 @@
     }
   },
   // Post-create setup - simplified for direct service execution
-  "postCreateCommand": "bash .devcontainer/post-create.sh && chmod +x .devcontainer/validate.sh && chmod +x .devcontainer/quick-check.sh && chmod +x .devcontainer/start-dev.sh && chmod +x .devcontainer/stop-dev.sh && chmod +x .devcontainer/build-local-images.sh && chmod +x .devcontainer/k8s-port-forward.sh && chmod +x .devcontainer/k8s-status.sh && chmod +x .devcontainer/dev-mode-selector.sh",
+  "postCreateCommand": "bash .devcontainer/post-create.sh && (chmod +x .devcontainer/*.sh 2>/dev/null || true)",
   // Environment variables for direct service execution
   "containerEnv": {
     "RUST_LOG": "debug",
