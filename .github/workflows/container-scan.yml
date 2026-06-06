@@ -115,9 +115,10 @@ jobs:
       fail-fast: false
       matrix:
         image:
-          - rabbitmq:3.13-management
-          - redis:7-alpine
-          - postgres:16-alpine
+          - rabbitmq:4.1-management
+          - redis:7.2.14-alpine
+          - postgres:17-alpine
+          - mcr.microsoft.com/devcontainers/universal:2
     steps:
       - name: Checkout
         uses: actions/checkout@v6
