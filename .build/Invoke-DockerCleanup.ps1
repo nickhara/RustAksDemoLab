@@ -143,9 +143,11 @@ Rotate-Log
 
 function Invoke-Docker {
     param([Parameter(Mandatory, ValueFromRemainingArguments)][string[]] $DockerArgs)
-    $out = & docker @DockerArgs 2>&1
+
+    # Force array output so callers can safely foreach even when docker returns a single line.
+    $out = @(& docker @DockerArgs 2>&1)
     if ($LASTEXITCODE -ne 0) {
-        throw "docker $($DockerArgs -join ' ') failed: $out"
+        throw "docker $($DockerArgs -join ' ') failed: $($out -join [Environment]::NewLine)"
     }
     return $out
 }
