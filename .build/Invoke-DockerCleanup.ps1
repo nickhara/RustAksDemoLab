@@ -23,10 +23,10 @@
     Survey      Report only, make no changes (default).
     Safe        Remove exited containers older than -MaxAgeDays, dangling
                 images, and unused networks. Volumes and build cache untouched.
-    Standard    Safe + remove unreferenced images + prune build cache.
+    Standard    Safe + remove dangling/untagged (<none>) images + prune build cache.
                 Volumes still untouched unless -IncludeVolumes.
-    Aggressive  Standard + remove ALL unused images (Docker prune --all)
-                + prune unused volumes (regardless of -IncludeVolumes).
+    Aggressive  Standard + remove ALL unused images (including named) + prune
+                unused volumes (regardless of -IncludeVolumes).
 
 .PARAMETER DryRun
     Print every planned action without executing it. Implies non-destructive.
@@ -303,23 +303,17 @@ function Get-ProtectedImageIds {
     if ($IgnoreImage.Count -gt 0) {
         $allImages = Invoke-Docker images --format '{{.ID}}|{{.Repository}}:{{.Tag}}'
         foreach ($row in $allImages) {
+            if ([string]::IsNullOrWhiteSpace($row)) { continue }
             $parts = $row -split '\|'
+            $id = $parts[0]; $name = $parts[1]
+            foreach ($p in $IgnoreImage) {
                 try {
-
                     if ($name -match $p -or $id -match $p) {
-
                         Add-ProtectedId $id "user ignore pattern '$p'"
-
                         break
-
                     }
-
                 } catch {
-
                     Write-Log "IgnoreImage pattern '$p' is not a valid regex; skipping" -Level WARN
-
-                    Add-ProtectedId $id "user ignore pattern '$p'"
-                    break
                 }
             }
         }
@@ -530,6 +524,11 @@ $after = Get-DockerSurvey
 $verb = if ($DryRun) { 'planned' } else { 'removed' }
 Write-Log "  Stale containers $verb: $($summary.StaleContainersRemoved)"
 Write-Log "  Images $verb:           $($summary.ImagesRemoved)"
+foreach ($k in $after.Keys) {
+    $v = $after[$k]
+
+Write-Log "  Images $verb:           $($summary.ImagesRemoved)"
+
     Write-Log ("  {0,-14} total={1,4} active={2,4} size={3,-10} reclaimable={4}" -f $k, $v.Total, $v.Active, $v.Size, $v.Reclaimable)
 }
 
