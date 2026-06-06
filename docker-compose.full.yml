@@ -1,5 +1,3 @@
-version: "3.8"
-
 # Complete containerized setup - all services running in Docker
 # For infrastructure-only setup, use: docker-compose up
 # For this full setup, use: docker-compose -f docker-compose.full.yml up

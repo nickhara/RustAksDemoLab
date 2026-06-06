@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Development container services
 # This compose file is used by the dev container for local development services
 
