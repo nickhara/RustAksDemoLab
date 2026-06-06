@@ -9,8 +9,9 @@
     tiers (Safe / Standard / Aggressive) plus a default Survey-only mode.
 
     Auto-protects:
-      - Images used by any running container
+      - Images bound to any container (running or stopped)
       - Images referenced by docker-compose*.yml files under -RepoPath
+      - mcr.microsoft.com/devcontainers/* base images when any vsc-* devcontainer image is present
       - Docker Desktop Kubernetes images when current kubectl context is
         'docker-desktop' (override with -SkipKubectlProtection)
       - Anything matching -IgnoreImage (regex array)
@@ -150,9 +151,10 @@ function Invoke-Docker {
 function ConvertFrom-DockerSize {
     param([string] $Size)
     if ([string]::IsNullOrWhiteSpace($Size)) { return 0L }
-    if ($Size -match '^\s*([\d\.]+)\s*([KMGT]?B)?\s*$') {
+    if ($Size -match '^\s*([\d\.]+)\s*([kKmMgGtT]?B)?\s*$') {
         $n = [double]$Matches[1]
-        switch ($Matches[2]) {
+        $unit = if ($Matches[2]) { $Matches[2].ToUpperInvariant() } else { '' }
+        switch ($unit) {
             'KB' { return [long]($n * 1KB) }
             'MB' { return [long]($n * 1MB) }
             'GB' { return [long]($n * 1GB) }
@@ -347,9 +349,17 @@ function Remove-StaleContainers {
     Write-Log "Removing $($Stale.Count) stale container(s) older than $MaxAgeDays days:"
     $Stale | ForEach-Object { Write-Log "  - $($_.Name) [$($_.Image)] $($_.Status)" }
     if ($DryRun) { Write-Log "  [DryRun] skipped removal"; return $Stale.Count }
-    $ids = @($Stale | ForEach-Object { $_.Id })
-    & docker rm @ids 2>&1 | ForEach-Object { Write-Log "  $_" }
-    return $Stale.Count
+    $removed = 0
+    foreach ($id in ($Stale | ForEach-Object { $_.Id })) {
+        $out = & docker rm $id 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            $removed++
+            $out | ForEach-Object { Write-Log "  $_" -Level DEBUG }
+        } else {
+            Write-Log "  could not remove container $id: $out" -Level WARN
+        }
+    }
+    return $removed
 }
 
 function Remove-Images-Unused {
@@ -389,16 +399,18 @@ function Remove-Images-Unused {
     if ($DryRun) { Write-Log "  [DryRun] skipped removal"; return @{ Count = $candidates.Count; BytesFreed = 0L } }
 
     $removed = 0
+    $bytesFreed = 0L
     foreach ($c in $candidates) {
         $out = & docker rmi $c.Id 2>&1
         if ($LASTEXITCODE -eq 0) {
             $removed++
+            $bytesFreed += ConvertFrom-DockerSize $c.Size
             Write-Log "  removed $($c.Id)  $($c.Name)"
         } else {
             Write-Log "  could not remove $($c.Id)  $($c.Name): $out" -Level WARN
         }
     }
-    return @{ Count = $removed; BytesFreed = $totalBytes }
+    return @{ Count = $removed; BytesFreed = $bytesFreed }
 }
 
 function Invoke-DockerPrune {
@@ -478,7 +490,7 @@ $summary.StaleContainersRemoved = Remove-StaleContainers -Stale $stale
 # Unused networks (always safe — only removes those with no attached containers)
 $summary.BytesFreedImages += Invoke-DockerPrune -Resource 'network'
 
-if ($Mode -in 'Safe') {
+if ($Mode -eq 'Safe') {
     $r = Remove-Images-Unused -ProtectedIds $protected.Ids -Reasons $protected.Reasons
     $summary.ImagesRemoved   += $r.Count
     $summary.BytesFreedImages += $r.BytesFreed
@@ -511,7 +523,7 @@ Write-Log "================================================================"
 Write-Log "RUN SUMMARY"
 Write-Log "  Stale containers removed: $($summary.StaleContainersRemoved)"
 Write-Log "  Images removed:           $($summary.ImagesRemoved)"
-Write-Log "  Bytes freed (images):     $(Format-Bytes $summary.BytesFreedImages)"
+Write-Log "  Bytes freed (images+networks): $(Format-Bytes $summary.BytesFreedImages)"
 Write-Log "  Bytes freed (cache):      $(Format-Bytes $summary.BytesFreedCache)"
 Write-Log "  Bytes freed (volumes):    $(Format-Bytes $summary.BytesFreedVolumes)"
 $total = $summary.BytesFreedImages + $summary.BytesFreedCache + $summary.BytesFreedVolumes
