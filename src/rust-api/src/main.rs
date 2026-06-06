@@ -126,8 +126,8 @@ async fn send_message(
         Ok(payload) => {
             let result = data.rabbitmq_channel
                 .basic_publish(
-                    "",
-                    &data.queue_name,
+                    "".into(),
+                    data.queue_name.as_str().into(),
                     BasicPublishOptions::default(),
                     &payload,
                     BasicProperties::default(),
@@ -177,7 +177,7 @@ async fn setup_rabbitmq(rabbitmq_url: &str, queue_name: &str) -> Result<Channel,
     
     channel
         .queue_declare(
-            queue_name,
+            queue_name.into(),
             QueueDeclareOptions {
                 durable: true,
                 ..Default::default()
