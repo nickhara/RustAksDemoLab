@@ -143,11 +143,15 @@ Rotate-Log
 
 function Invoke-Docker {
     param([Parameter(Mandatory, ValueFromRemainingArguments)][string[]] $DockerArgs)
-
-    # Force array output so callers can safely foreach even when docker returns a single line.
-    $out = @(& docker @DockerArgs 2>&1)
+
+
+    # Force array output so callers can safely foreach even when docker returns a single line.
+
+    $out = @(& docker @DockerArgs 2>&1)
+
     if ($LASTEXITCODE -ne 0) {
-        throw "docker $($DockerArgs -join ' ') failed: $($out -join [Environment]::NewLine)"
+        throw "docker $($DockerArgs -join ' ') failed: $($out -join [Environment]::NewLine)"
+
     }
     return $out
 }
@@ -274,7 +278,13 @@ function Get-ProtectedImageIds {
                 Add-ProtectedId $id "devcontainer base for active vsc-* image '$name'"
             }
         }
-    }
+        $kctx = $null
+        try {
+            $kctx = & kubectl config current-context 2>$null
+        } catch {
+            Write-Log "kubectl not available; skipping Kubernetes image protection." -Level DEBUG
+        }
+
 
     # 4. Docker Desktop Kubernetes images (when current context = docker-desktop)
     if (-not $SkipKubectlProtection) {
