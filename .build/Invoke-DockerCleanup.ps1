@@ -286,11 +286,11 @@ function Get-ProtectedImageIds {
         $kctx = $null
 
         try {
-            $kctx = & kubectl config current-context 2>$null
+            $kctx = (& kubectl config current-context 2>$null).Trim()
         } catch {
             Write-Log "kubectl not available; skipping Kubernetes image protection." -Level DEBUG
+            $kctx = $null
         }
-        $kctx = & kubectl config current-context 2>$null
         if ($kctx -eq 'docker-desktop') {
             Write-Log "Kubectl context is 'docker-desktop'; auto-protecting Docker Desktop K8s images"
             $patterns = @(
@@ -377,7 +377,7 @@ function Remove-StaleContainers {
             $removed++
             $out | ForEach-Object { Write-Log "  $_" -Level DEBUG }
         } else {
-            Write-Log "  could not remove container ($id): $out" -Level WARN
+            Write-Log "  could not remove container ($id): $($out -join [Environment]::NewLine)" -Level WARN
         }
     }
     return $removed
@@ -428,7 +428,7 @@ function Remove-Images-Unused {
             $bytesFreed += ConvertFrom-DockerSize $c.Size
             Write-Log "  removed $($c.Id)  $($c.Name)"
         } else {
-            Write-Log "  could not remove $($c.Id)  $($c.Name): $out" -Level WARN
+            Write-Log "  could not remove $($c.Id)  $($c.Name): $($out -join [Environment]::NewLine)" -Level WARN
         }
     }
     return @{ Count = $removed; BytesFreed = $bytesFreed }
@@ -474,7 +474,7 @@ try {
 
 # Guard against accidentally targeting a remote daemon via DOCKER_HOST.
 
-if ($Mode -ne 'Survey' -and -not [string]::IsNullOrWhiteSpace($env:DOCKER_HOST) -and $env:DOCKER_HOST -match '^(?i)tcp://') {
+if ($Mode -ne 'Survey' -and -not [string]::IsNullOrWhiteSpace($env:DOCKER_HOST) -and $env:DOCKER_HOST -match '^(?i)(tcp|ssh)://') {
 
     Write-Log "DOCKER_HOST is set to '$($env:DOCKER_HOST)'; this script can prune remote resources." -Level WARN
 
