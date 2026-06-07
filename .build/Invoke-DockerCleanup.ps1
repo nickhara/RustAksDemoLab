@@ -406,6 +406,10 @@ function Remove-Images-Unused {
         }
         $candidates += [pscustomobject]@{ Id = $id; Name = $name; Size = $size; Age = $age }
     }
+    }
+
+    # De-dupe by image ID: a single image may have multiple tags/rows in `docker images`.
+    $candidates = $candidates | Sort-Object -Property Id -Unique
 
     if ($candidates.Count -eq 0) {
         Write-Log "No unused images to remove."
@@ -478,16 +482,26 @@ if ($Mode -ne 'Survey' -and -not [string]::IsNullOrWhiteSpace($env:DOCKER_HOST) 
 
     Write-Log "DOCKER_HOST is set to '$($env:DOCKER_HOST)'; this script can prune remote resources." -Level WARN
 
-    # Never allow -Force to bypass the remote-engine guard. DryRun is still OK.
-    $origForce = $Force
-    $Force = $false
-    try {
-        if (-not (Confirm-Or-Exit "Proceed while DOCKER_HOST targets a remote engine")) {
-            Write-Log "User declined due to remote DOCKER_HOST; exiting." -Level WARN
-            exit 0
-        }
-    } finally {
-        $Force = $origForce
+    # Never allow -Force to bypass the remote-engine guard. DryRun is still OK.
+
+    $origForce = $Force
+
+    $Force = $false
+
+    try {
+
+        if (-not (Confirm-Or-Exit "Proceed while DOCKER_HOST targets a remote engine")) {
+
+            Write-Log "User declined due to remote DOCKER_HOST; exiting." -Level WARN
+
+            exit 0
+
+        }
+
+    } finally {
+
+        $Force = $origForce
+
     }
 
 }
