@@ -38,7 +38,7 @@ summary.
 |---|---|---|---|---|
 | **Survey** (default) | report only | report only | report only | report only |
 | **Safe** | exited > `-MaxAgeDays` | dangling only | — | — |
-| **Standard** | exited > `-MaxAgeDays` | dangling + unused unnamed | pruned (`-IncludeBuildCache`) | only if `-IncludeVolumes` |
+| **Standard** | exited > `-MaxAgeDays` | dangling only | pruned (`-IncludeBuildCache`) | only if `-IncludeVolumes` |
 | **Aggressive** | exited > `-MaxAgeDays` | **all unused** (incl. named) | pruned | **pruned always** |
 
 The "stale containers" filter requires a container to be older than
