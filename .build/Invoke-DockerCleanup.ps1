@@ -478,12 +478,16 @@ if ($Mode -ne 'Survey' -and -not [string]::IsNullOrWhiteSpace($env:DOCKER_HOST) 
 
     Write-Log "DOCKER_HOST is set to '$($env:DOCKER_HOST)'; this script can prune remote resources." -Level WARN
 
-    if (-not (Confirm-Or-Exit "Proceed while DOCKER_HOST targets a remote engine")) {
-
-        Write-Log "User declined due to remote DOCKER_HOST; exiting." -Level WARN
-
-        exit 0
-
+    # Never allow -Force to bypass the remote-engine guard. DryRun is still OK.
+    $origForce = $Force
+    $Force = $false
+    try {
+        if (-not (Confirm-Or-Exit "Proceed while DOCKER_HOST targets a remote engine")) {
+            Write-Log "User declined due to remote DOCKER_HOST; exiting." -Level WARN
+            exit 0
+        }
+    } finally {
+        $Force = $origForce
     }
 
 }
