@@ -102,7 +102,7 @@ and exits 0. Use the output to:
 |---|---|
 | User just wants "the safe stuff" / first run | **Safe** |
 | Periodic maintenance / general "clean up Docker" / build cache is large | **Standard** (default for most asks) |
-| User explicitly wants maximum reclaim, or disk pressure is high | **Aggressive** + `-IncludeVolumes` |
+| User explicitly wants maximum reclaim, or disk pressure is high | **Aggressive** (volumes are always pruned; confirm first) |
 | Just curious / wants to see what would happen | **Standard** or **Aggressive** with `-DryRun` |
 
 ### Step 3: Identify protection scopes
