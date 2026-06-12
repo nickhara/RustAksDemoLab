@@ -22,7 +22,7 @@ COPY src ./src
 RUN touch src/main.rs && cargo build --release
 
 # Runtime stage
-FROM alpine:3.23
+FROM alpine:3.24
 
 # Install runtime dependencies and apply OS-level security patches
 RUN apk upgrade --no-cache && \
